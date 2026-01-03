@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "488482876166",
+    "firebase_url": "https://meal-recommender-android-9801b-default-rtdb.firebaseio.com",
+    "project_id": "meal-recommender-android-9801b",
+    "storage_bucket": "meal-recommender-android-9801b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:488482876166:android:048fd8068e99a1de43cc87",
+        "android_client_info": {
+          "package_name": "com.example.mealrecmmenderandroid"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDgZ5j6Hm7nxRrUCEhncVq_MXrH_5TLMl0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

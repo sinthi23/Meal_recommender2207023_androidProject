@@ -1,0 +1,47 @@
+<resources>
+    <string name="app_name">Healthy Meal Recommender</string>
+
+    <!-- Navigation -->
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <!-- Menu Items -->
+    <string name="menu_home">Home</string>
+    <string name="menu_cook_history">Cook History</string>
+    <string name="menu_analytics">Analytics</string>
+    <string name="menu_profile">Profile</string>
+    <string name="menu_provider_dashboard">Provider Dashboard</string>
+    <string name="menu_logout">Logout</string>
+
+    <!-- Common -->
+    <string name="loading">Loading…</string>
+    <string name="error">Error</string>
+    <string name="success">Success</string>
+    <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
+    <string name="delete">Delete</string>
+    <string name="edit">Edit</string>
+    <string name="submit">Submit</string>
+    <string name="ok">OK</string>
+
+    <!-- Login & Registration -->
+    <string name="email_hint">Email</string>
+    <string name="password_hint">Password</string>
+    <string name="login">Login</string>
+    <string name="register">Register</string>
+    <string name="forgot_password">Forgot Password?</string>
+
+    <!-- Recipe -->
+    <string name="recipe_name">Recipe Name</string>
+    <string name="calories">Calories</string>
+    <string name="prep_time">Prep Time</string>
+    <string name="cook_time">Cook Time</string>
+    <string name="servings">Servings</string>
+    <string name="ingredients">Ingredients</string>
+    <string name="instructions">Instructions</string>
+
+    <!-- Empty States -->
+    <string name="no_recipes">No recipes found</string>
+    <string name="no_history">No cooking history</string>
+    <string name="no_data">No data available</string>
+</resources>
