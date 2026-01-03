@@ -17,18 +17,18 @@ import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
-import com.healthymeal.recommender.R;
-import com.healthymeal.recommender.activities.consumer.AnalyticsActivity;
-import com.healthymeal.recommender.activities.consumer.CookHistoryActivity;
-import com.healthymeal.recommender.activities.consumer.IngredientSelectionActivity;
-import com.healthymeal.recommender.activities.consumer.ProfileActivity;
-import com.healthymeal.recommender.activities.consumer.RecipeDetailActivity;
-import com.healthymeal.recommender.activities.provider.ProviderDashboardActivity;
-import com.healthymeal.recommender.adapters.RecipeAdapter;
-import com.healthymeal.recommender.databinding.ActivityMainBinding;
-import com.healthymeal.recommender.models.Recipe;
-import com.healthymeal.recommender.utils.FirebaseHelper;
-import com.healthymeal.recommender.utils.SessionManager;
+import com.example.mealrecmmenderandroid.R;
+import com.example.mealrecmmenderandroid.activities.consumer.AnalyticsActivity;
+import com.example.mealrecmmenderandroid.activities.consumer.CookHistoryActivity;
+import com.example.mealrecmmenderandroid.activities.consumer.IngredientSelectionActivity;
+//import com.example.mealrecmmenderandroid.activities.consumer.ProfileActivity;
+import com.example.mealrecmmenderandroid.activities.consumer.RecipeDetailActivity;
+import com.example.mealrecmmenderandroid.activities.provider.ProviderDashboardActivity;
+import com.example.mealrecmmenderandroid.adapters.RecipeAdapter;
+import com.example.mealrecmmenderandroid.databinding.ActivityMainBinding;
+import com.example.mealrecmmenderandroid.models.Recipe;
+import com.example.mealrecmmenderandroid.helpers.FirebaseHelper;
+import com.example.mealrecmmenderandroid.helpers.SessionManager;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -90,14 +90,23 @@ public class MainActivity extends AppCompatActivity
 
     private void setupRecyclerView() {
         recipeAdapter = new RecipeAdapter(this, new ArrayList<>(),
-                selectedIngredients, this::onRecipeClick);
+                selectedIngredients, new RecipeAdapter.OnRecipeClickListener() {
+            @Override
+            public void onRecipeClick(Recipe recipe) {
+                MainActivity.this.onRecipeClick(recipe);
+            }
+        });
         binding.recipesRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         binding.recipesRecyclerView.setAdapter(recipeAdapter);
     }
 
     private void setupListeners() {
-        binding.selectIngredientsButton.setOnClickListener(v ->
-                showIngredientSelection());
+        binding.selectIngredientsButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showIngredientSelection();
+            }
+        });
     }
 
     private void loadRecipes() {
@@ -158,10 +167,14 @@ public class MainActivity extends AppCompatActivity
             Chip chip = new Chip(this);
             chip.setText(ingredient);
             chip.setCloseIconVisible(true);
-            chip.setOnCloseIconClickListener(v -> {
-                selectedIngredients.remove(ingredient);
-                binding.ingredientChipGroup.removeView(chip);
-                filterRecipes();
+            final String finalIngredient = ingredient;
+            chip.setOnCloseIconClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    selectedIngredients.remove(finalIngredient);
+                    binding.ingredientChipGroup.removeView(chip);
+                    filterRecipes();
+                }
             });
             binding.ingredientChipGroup.addView(chip);
         }
