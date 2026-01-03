@@ -413,13 +413,12 @@
                     app:icon="@drawable/ic_add" />
             </LinearLayout>
 
-            <!-- Ingredients List -->
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/ingredientsRecyclerView"
+            <!-- Ingredients Chip Group -->
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/ingredientsChipGroup"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:minHeight="100dp" />
+                android:layout_marginTop="8dp" />
 
             <!-- Instructions -->
             <TextView
@@ -448,14 +447,14 @@
                     android:gravity="top" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Save Button -->
+            <!-- Submit Button -->
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/saveRecipeButton"
+                android:id="@+id/submitRecipeButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
                 android:layout_marginBottom="16dp"
-                android:text="Save Recipe"
+                android:text="Submit Recipe"
                 android:textSize="16sp"
                 android:padding="16dp" />
 
