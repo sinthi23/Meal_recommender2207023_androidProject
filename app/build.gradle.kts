@@ -25,6 +25,24 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
+    android {
+        namespace = "com.example.mealrecmmenderandroid"
+
+        defaultConfig {
+            applicationId = "com.example.mealrecmmenderandroid"
+
+            buildConfigField(
+                "String",
+                "GOOGLE_API_KEY",
+                "\"$googleApiKey\""
+            )
+        }
+
+        buildFeatures {
+            viewBinding = true
+            buildConfig = true
+        }
+    }
 
     buildTypes {
         release {
