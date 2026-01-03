@@ -1,4 +1,4 @@
-package com.healthymeal.recommender.activities.provider;
+package com.example.mealrecmmenderandroid.activities.provider;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -13,15 +13,15 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
-import com.healthymeal.recommender.R;
-import com.healthymeal.recommender.adapters.ProviderRecipeAdapter;
-import com.healthymeal.recommender.databinding.ActivityProviderDashboardBinding;
-import com.healthymeal.recommender.models.Award;
-import com.healthymeal.recommender.models.Recipe;
-import com.healthymeal.recommender.models.User;
-import com.healthymeal.recommender.utils.DateHelper;
-import com.healthymeal.recommender.utils.FirebaseHelper;
-import com.healthymeal.recommender.utils.SessionManager;
+import com.example.mealrecmmenderandroid.R;
+import com.example.mealrecmmenderandroid.adapters.ProviderRecipeAdapter;
+import com.example.mealrecmmenderandroid.databinding.ActivityProviderDashboardBinding;
+import com.example.mealrecmmenderandroid.models.Award;
+import com.example.mealrecmmenderandroid.models.Recipe;
+import com.example.mealrecmmenderandroid.models.User;
+import com.example.mealrecmmenderandroid.utils.DateHelper;
+import com.example.mealrecmmenderandroid.helpers.FirebaseHelper;
+import com.example.mealrecmmenderandroid.helpers.SessionManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,7 +58,12 @@ public class ProviderDashboardActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setTitle("Provider Dashboard");
         }
-        binding.toolbar.setNavigationOnClickListener(v -> onBackPressed());
+        binding.toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onBackPressed();
+            }
+        });
     }
 
     private void setupRecyclerView() {
@@ -88,8 +93,11 @@ public class ProviderDashboardActivity extends AppCompatActivity {
     }
 
     private void setupListeners() {
-        binding.addRecipeButton.setOnClickListener(v -> {
-            startActivity(new Intent(this, AddRecipeActivity.class));
+        binding.addRecipeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(ProviderDashboardActivity.this, AddRecipeActivity.class));
+            }
         });
     }
 
@@ -197,19 +205,28 @@ public class ProviderDashboardActivity extends AppCompatActivity {
         new androidx.appcompat.app.AlertDialog.Builder(this)
                 .setTitle("Delete Recipe")
                 .setMessage("Are you sure you want to delete this recipe?")
-                .setPositiveButton("Delete", (dialog, which) -> {
-                    firebaseHelper.getRecipeRef(recipe.getRecipeId())
-                            .removeValue()
-                            .addOnSuccessListener(aVoid -> {
-                                Toast.makeText(this, "Recipe deleted", Toast.LENGTH_SHORT).show();
-
-                                // Update provider recipe count
-                                updateProviderRecipeCount(-1);
-                            })
-                            .addOnFailureListener(e -> {
-                                Toast.makeText(this, "Failed to delete: " + e.getMessage(),
-                                        Toast.LENGTH_SHORT).show();
-                            });
+                .setPositiveButton("Delete", new android.content.DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(android.content.DialogInterface dialog, int which) {
+                        firebaseHelper.getRecipeRef(recipe.getRecipeId())
+                                .removeValue()
+                                .addOnSuccessListener(new com.google.android.gms.tasks.OnSuccessListener<Void>() {
+                                    @Override
+                                    public void onSuccess(Void aVoid) {
+                                        Toast.makeText(ProviderDashboardActivity.this,
+                                                "Recipe deleted", Toast.LENGTH_SHORT).show();
+                                        updateProviderRecipeCount(-1);
+                                    }
+                                })
+                                .addOnFailureListener(new com.google.android.gms.tasks.OnFailureListener() {
+                                    @Override
+                                    public void onFailure(@NonNull Exception e) {
+                                        Toast.makeText(ProviderDashboardActivity.this,
+                                                "Failed to delete: " + e.getMessage(),
+                                                Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                    }
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
