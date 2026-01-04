@@ -21,7 +21,7 @@ import com.example.mealrecmmenderandroid.R;
 import com.example.mealrecmmenderandroid.activities.consumer.AnalyticsActivity;
 import com.example.mealrecmmenderandroid.activities.consumer.CookHistoryActivity;
 import com.example.mealrecmmenderandroid.activities.consumer.IngredientSelectionActivity;
-//import com.example.mealrecmmenderandroid.activities.consumer.ProfileActivity;
+import com.example.mealrecmmenderandroid.activities.consumer.ProfileActivity;
 import com.example.mealrecmmenderandroid.activities.consumer.RecipeDetailActivity;
 import com.example.mealrecmmenderandroid.activities.provider.ProviderDashboardActivity;
 import com.example.mealrecmmenderandroid.adapters.RecipeAdapter;
