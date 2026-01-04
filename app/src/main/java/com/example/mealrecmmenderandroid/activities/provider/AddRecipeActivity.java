@@ -13,14 +13,13 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.github.dhaval2404.imagepicker.ImagePicker;
 import com.google.android.material.chip.Chip;
 import com.google.firebase.storage.StorageReference;
-import com.healthymeal.recommender.R;
-import com.healthymeal.recommender.databinding.ActivityAddRecipeBinding;
-import com.healthymeal.recommender.models.Recipe;
-import com.healthymeal.recommender.utils.FirebaseHelper;
-import com.healthymeal.recommender.utils.SessionManager;
+import com.example.mealrecmmenderandroid.R;
+import com.example.mealrecmmenderandroid.databinding.ActivityAddRecipeBinding;
+import com.example.mealrecmmenderandroid.models.Recipe;
+import com.example.mealrecmmenderandroid.helpers.FirebaseHelper;
+import com.example.mealrecmmenderandroid.helpers.SessionManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -64,7 +63,12 @@ public class AddRecipeActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setTitle("Add New Recipe");
         }
-        binding.toolbar.setNavigationOnClickListener(v -> onBackPressed());
+        binding.toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onBackPressed();
+            }
+        });
     }
 
     private void setupSpinners() {
@@ -89,13 +93,26 @@ public class AddRecipeActivity extends AppCompatActivity {
     }
 
     private void setupListeners() {
-        binding.selectImageButton.setOnClickListener(v -> pickImage());
+        binding.selectImageButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                pickImage();
+            }
+        });
 
-        binding.addIngredientButton.setOnClickListener(v -> addIngredient());
+        binding.addIngredientButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                addIngredient();
+            }
+        });
 
-        binding.addTagButton.setOnClickListener(v -> addTag());
-
-        binding.submitRecipeButton.setOnClickListener(v -> submitRecipe());
+        binding.submitRecipeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                submitRecipe();
+            }
+        });
     }
 
     private void setupImagePicker() {
@@ -114,14 +131,9 @@ public class AddRecipeActivity extends AppCompatActivity {
     }
 
     private void pickImage() {
-        ImagePicker.with(this)
-                .crop()
-                .compress(1024)
-                .maxResultSize(1080, 1080)
-                .createIntent(intent -> {
-                    imagePickerLauncher.launch(intent);
-                    return null;
-                });
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("image/*");
+        imagePickerLauncher.launch(intent);
     }
 
     private void addIngredient() {
@@ -150,10 +162,20 @@ public class AddRecipeActivity extends AppCompatActivity {
         }
         chip.setText(displayText);
         chip.setCloseIconVisible(true);
-        chip.setOnCloseIconClickListener(v -> {
-            binding.ingredientsChipGroup.removeView(chip);
-            ingredientsList.remove(name);
-            ingredientDetailsList.removeIf(detail -> detail.getName().equals(name));
+        final String finalName = name;
+        chip.setOnCloseIconClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                binding.ingredientsChipGroup.removeView(chip);
+                ingredientsList.remove(finalName);
+                // Remove from details list
+                for (int i = 0; i < ingredientDetailsList.size(); i++) {
+                    if (ingredientDetailsList.get(i).getName().equals(finalName)) {
+                        ingredientDetailsList.remove(i);
+                        break;
+                    }
+                }
+            }
         });
         binding.ingredientsChipGroup.addView(chip);
 
@@ -161,29 +183,6 @@ public class AddRecipeActivity extends AppCompatActivity {
         binding.ingredientNameEditText.setText("");
         binding.ingredientQuantityEditText.setText("");
         binding.ingredientUnitEditText.setText("");
-    }
-
-    private void addTag() {
-        String tag = binding.tagEditText.getText().toString().trim();
-
-        if (TextUtils.isEmpty(tag)) {
-            binding.tagEditText.setError("Required");
-            return;
-        }
-
-        tagsList.add(tag);
-
-        // Display as chip
-        Chip chip = new Chip(this);
-        chip.setText(tag);
-        chip.setCloseIconVisible(true);
-        chip.setOnCloseIconClickListener(v -> {
-            binding.tagsChipGroup.removeView(chip);
-            tagsList.remove(tag);
-        });
-        binding.tagsChipGroup.addView(chip);
-
-        binding.tagEditText.setText("");
     }
 
     private void submitRecipe() {
@@ -271,7 +270,7 @@ public class AddRecipeActivity extends AppCompatActivity {
                 .addOnFailureListener(e -> {
                     binding.progressBar.setVisibility(View.GONE);
                     binding.submitRecipeButton.setEnabled(true);
-                    Toast.makeText(this, "Failed to upload image: " + e.getMessage(),
+                    Toast.makeText(AddRecipeActivity.this, "Failed to upload image: " + e.getMessage(),
                             Toast.LENGTH_SHORT).show();
                 });
     }
@@ -312,7 +311,6 @@ public class AddRecipeActivity extends AppCompatActivity {
 
         // Convert lists to maps for Firebase
         recipe.setIngredientsFromList(ingredientsList);
-        recipe.setTagsFromList(tagsList);
 
         // Convert ingredient details to map
         Map<String, Recipe.IngredientDetail> detailsMap = new HashMap<>();
@@ -331,7 +329,7 @@ public class AddRecipeActivity extends AppCompatActivity {
                     updateProviderRecipeCount();
 
                     binding.progressBar.setVisibility(View.GONE);
-                    Toast.makeText(this,
+                    Toast.makeText(AddRecipeActivity.this,
                             "Recipe submitted! Waiting for admin approval.",
                             Toast.LENGTH_LONG).show();
                     finish();
@@ -339,7 +337,7 @@ public class AddRecipeActivity extends AppCompatActivity {
                 .addOnFailureListener(e -> {
                     binding.progressBar.setVisibility(View.GONE);
                     binding.submitRecipeButton.setEnabled(true);
-                    Toast.makeText(this, "Failed to create recipe: " + e.getMessage(),
+                    Toast.makeText(AddRecipeActivity.this, "Failed to create recipe: " + e.getMessage(),
                             Toast.LENGTH_SHORT).show();
                 });
     }
