@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true"
-    android:background="@android:color/white">
+    android:background="@color/background_color">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -16,7 +16,8 @@
             android:layout_width="100dp"
             android:layout_height="100dp"
             android:layout_marginTop="24dp"
-            android:src="@drawable/ic_meal_logo"
+            android:src="@mipmap/ic_launcher"
+            android:contentDescription="@string/app_name"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -53,11 +54,11 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="32dp"
             android:hint="Full Name"
-            app:startIconDrawable="@drawable/ic_person"
+            app:startIconDrawable="@drawable/ic_profile"
             app:layout_constraintTop_toBottomOf="@id/subtitleTextView">
 
             <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/nameEditText"
+                android:id="@+id/et_full_name"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="textPersonName" />
@@ -69,12 +70,12 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:hint="Email"
-            app:startIconDrawable="@drawable/ic_email"
+            android:hint="@string/email_hint"
+            app:startIconDrawable="@android:drawable/ic_dialog_email"
             app:layout_constraintTop_toBottomOf="@id/nameLayout">
 
             <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/emailEditText"
+                android:id="@+id/et_email"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="textEmailAddress" />
@@ -87,11 +88,11 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:hint="Phone Number"
-            app:startIconDrawable="@drawable/ic_phone"
+            app:startIconDrawable="@android:drawable/stat_sys_phone_call"
             app:layout_constraintTop_toBottomOf="@id/emailLayout">
 
             <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/phoneEditText"
+                android:id="@+id/et_phone"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="phone" />
@@ -110,7 +111,7 @@
             app:layout_constraintTop_toBottomOf="@id/phoneLayout" />
 
         <RadioGroup
-            android:id="@+id/userTypeRadioGroup"
+            android:id="@+id/rg_user_type"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
@@ -118,40 +119,22 @@
             app:layout_constraintTop_toBottomOf="@id/userTypeLabel">
 
             <RadioButton
-                android:id="@+id/consumerRadioButton"
+                android:id="@+id/rb_consumer"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:checked="true"
                 android:text="Consumer"
-                android:tag="consumer" />
+                android:textColor="@color/text_primary" />
 
             <RadioButton
-                android:id="@+id/providerRadioButton"
+                android:id="@+id/rb_provider"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Provider"
-                android:tag="provider" />
+                android:textColor="@color/text_primary" />
         </RadioGroup>
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/businessNameLayout"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:hint="Business Name"
-            android:visibility="gone"
-            app:startIconDrawable="@drawable/ic_business"
-            app:layout_constraintTop_toBottomOf="@id/userTypeRadioGroup">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/businessNameEditText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="text" />
-        </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/passwordLayout"
@@ -159,13 +142,13 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:hint="Password"
+            android:hint="@string/password_hint"
             app:endIconMode="password_toggle"
-            app:startIconDrawable="@drawable/ic_lock"
-            app:layout_constraintTop_toBottomOf="@id/businessNameLayout">
+            app:startIconDrawable="@android:drawable/ic_lock_lock"
+            app:layout_constraintTop_toBottomOf="@id/rg_user_type">
 
             <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/passwordEditText"
+                android:id="@+id/et_password"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="textPassword" />
@@ -179,24 +162,25 @@
             android:layout_marginTop="16dp"
             android:hint="Confirm Password"
             app:endIconMode="password_toggle"
-            app:startIconDrawable="@drawable/ic_lock"
+            app:startIconDrawable="@android:drawable/ic_lock_lock"
             app:layout_constraintTop_toBottomOf="@id/passwordLayout">
 
             <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/confirmPasswordEditText"
+                android:id="@+id/et_confirm_password"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="textPassword" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/registerButton"
+            android:id="@+id/btn_register"
             android:layout_width="match_parent"
-            android:layout_height="60dp"
+            android:layout_height="56dp"
             android:layout_marginTop="24dp"
-            android:text="Register"
+            android:text="@string/register"
             android:textSize="16sp"
-            app:cornerRadius="30dp"
+            android:backgroundTint="@color/primary_color"
+            app:cornerRadius="8dp"
             app:layout_constraintTop_toBottomOf="@id/confirmPasswordLayout" />
 
         <LinearLayout
@@ -209,7 +193,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/registerButton">
+            app:layout_constraintTop_toBottomOf="@id/btn_register">
 
             <TextView
                 android:layout_width="wrap_content"
@@ -219,17 +203,17 @@
                 android:textSize="14sp" />
 
             <TextView
-                android:id="@+id/loginTextView"
+                android:id="@+id/tv_login"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Login"
+                android:text="@string/login"
                 android:textColor="@color/primary_color"
                 android:textSize="14sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
         <ProgressBar
-            android:id="@+id/progressBar"
+            android:id="@+id/progress_bar"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:visibility="gone"

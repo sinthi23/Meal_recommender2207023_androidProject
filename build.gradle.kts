@@ -4,15 +4,16 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath("com.android.tools.build:gradle:8.3.2")  // Updated
+        classpath("com.android.tools.build:gradle:8.3.2")
         classpath("com.google.gms:google-services:4.4.2")
     }
 }
 
 plugins {
-    id("com.android.application") version "8.3.2" apply false  // Updated
+    id("com.android.application") version "8.3.2" apply false
+    id("com.google.gms.google-services") version "4.4.2" apply false
 }
 
 tasks.register("clean", Delete::class) {
-    delete(rootProject.buildDir)
+    delete(rootProject.layout.buildDirectory)
 }
