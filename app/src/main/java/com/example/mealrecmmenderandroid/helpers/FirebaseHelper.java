@@ -1,5 +1,7 @@
 package com.example.mealrecmmenderandroid.helpers;
 
+import android.util.Log;
+
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
@@ -14,14 +16,20 @@ public class FirebaseHelper {
 
     private FirebaseHelper() {
         auth = FirebaseAuth.getInstance();
-        database = FirebaseDatabase.getInstance();
+
+        // IMPORTANT: Use explicit database URL
+        database = FirebaseDatabase.getInstance("https://meal-recommender-android-9801b-default-rtdb.firebaseio.com");
+
         storage = FirebaseStorage.getInstance();
+
+        // Log for debugging
+        Log.d("FirebaseHelper", "Database URL: " + database.getReference().toString());
 
         // Enable offline persistence
         try {
             database.setPersistenceEnabled(true);
         } catch (Exception e) {
-            // Already enabled
+            Log.d("FirebaseHelper", "Persistence already enabled");
         }
     }
 

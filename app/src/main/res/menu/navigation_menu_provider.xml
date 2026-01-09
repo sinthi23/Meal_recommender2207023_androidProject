@@ -1,23 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <group android:checkableBehavior="single">
-        <item
-            android:id="@+id/nav_provider_dashboard"
-            android:icon="@drawable/ic_dashboard"
-            android:title="Dashboard" />
+    <item
+        android:id="@+id/nav_provider_dashboard"
+        android:icon="@drawable/ic_home"
+        android:title="Dashboard" />
 
-        <item
-            android:id="@+id/nav_home"
-            android:icon="@drawable/ic_home"
-            android:title="Browse Recipes" />
-    </group>
+    <item
+        android:id="@+id/nav_browse_recipes"
+        android:icon="@drawable/ic_home"
+        android:title="Browse Recipes" />
 
-    <item android:title="Account">
-        <menu>
-            <item
-                android:id="@+id/nav_logout"
-                android:icon="@drawable/ic_logout"
-                android:title="@string/menu_logout" />
-        </menu>
-    </item>
+    <item
+        android:id="@+id/nav_logout"
+        android:icon="@drawable/ic_logout"
+        android:title="@string/menu_logout" />
 </menu>
