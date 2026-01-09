@@ -5,10 +5,11 @@
     <!-- Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32"
         tools:ignore="ScopedStorage" />
-    <uses-permission android:name="android.permission.CAMERA" />
 
     <application
         android:allowBackup="true"
@@ -25,7 +26,7 @@
         <activity
             android:name=".activities.SplashActivity"
             android:exported="true"
-            android:theme="@style/Theme.MealRecmmenderAndroid.Splash">
+            android:theme="@style/Theme.AppCompat.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -55,11 +56,11 @@
 
         <!-- Consumer Activities -->
         <activity
-            android:name=".activities.consumer.ConsumerHomeActivity"
+            android:name=".activities.consumer.AnalyticsActivity"
             android:exported="false" />
 
         <activity
-            android:name=".activities.consumer.RecipeSearchActivity"
+            android:name=".activities.consumer.CookHistoryActivity"
             android:exported="false" />
 
         <activity
@@ -88,23 +89,6 @@
             android:name=".activities.provider.EditRecipeActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
-
-        <activity
-            android:name=".activities.provider.ManageRecipesActivity"
-            android:exported="false" />
-
-        <!-- Admin Activities -->
-        <activity
-            android:name=".activities.admin.AdminDashboardActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".activities.admin.ManageUsersActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".activities.admin.ManageProvidersActivity"
-            android:exported="false" />
 
         <!-- FileProvider for image picking -->
         <provider
