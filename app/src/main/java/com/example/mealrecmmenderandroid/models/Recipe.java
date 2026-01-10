@@ -2,169 +2,57 @@ package com.example.mealrecmmenderandroid.models;
 
 import com.google.firebase.database.Exclude;
 import com.google.firebase.database.IgnoreExtraProperties;
-
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @IgnoreExtraProperties
 public class Recipe implements Serializable {
+
     private String recipeId;
     private String recipeName;
     private String description;
+    private String instructions;
+    private String imageUrl;
     private String providerId;
     private String providerName;
-    private Map<String, String> ingredients; // Using Map for Firebase compatibility
-    private Map<String, IngredientDetail> ingredientDetails;
-    private String instructions;
+    private String category;
+    private String difficulty;
+    private String cuisine;
+
     private int calories;
-    private double healthScore;
     private int preparationTime;
     private int cookingTime;
     private int servings;
-    private String category;
-    private String cuisine;
-    private String difficulty;
-    private String imageUrl;
-    private long createdDate;
-    private long updatedDate;
-    private double averageRating;
-    private int ratingCount;
-    private int viewCount;
-    private int cookCount;
-    private boolean isApproved;
-    private boolean isFeatured;
 
-    // Nutrition
+    private double healthScore;
     private double protein;
     private double carbs;
     private double fat;
     private double fiber;
-    private double sugar;
-    private double sodium;
 
-    // Tags
-    private Map<String, String> tags;
+    // Rating fields
+    private double averageRating;
+    private int totalRatings;
+    private Map<String, Double> userRatings;
 
+    private Map<String, String> ingredients;
+    private Map<String, IngredientDetail> ingredientDetails;
+
+    private boolean approved;
+    private long createdAt;
+
+    // Empty constructor required for Firebase
     public Recipe() {
         this.ingredients = new HashMap<>();
         this.ingredientDetails = new HashMap<>();
-        this.tags = new HashMap<>();
-        this.createdDate = System.currentTimeMillis();
-        this.updatedDate = System.currentTimeMillis();
-        this.averageRating = 0;
-        this.ratingCount = 0;
-        this.viewCount = 0;
-        this.cookCount = 0;
-        this.isApproved = false;
-        this.isFeatured = false;
+        this.userRatings = new HashMap<>();
+        this.averageRating = 0.0;
+        this.totalRatings = 0;
     }
 
-    // Getters
-    public String getRecipeId() { return recipeId; }
-    public String getRecipeName() { return recipeName; }
-    public String getDescription() { return description; }
-    public String getProviderId() { return providerId; }
-    public String getProviderName() { return providerName; }
-    public Map<String, String> getIngredients() { return ingredients; }
-    public Map<String, IngredientDetail> getIngredientDetails() { return ingredientDetails; }
-    public String getInstructions() { return instructions; }
-    public int getCalories() { return calories; }
-    public double getHealthScore() { return healthScore; }
-    public int getPreparationTime() { return preparationTime; }
-    public int getCookingTime() { return cookingTime; }
-    public int getServings() { return servings; }
-    public String getCategory() { return category; }
-    public String getCuisine() { return cuisine; }
-    public String getDifficulty() { return difficulty; }
-    public String getImageUrl() { return imageUrl; }
-    public long getCreatedDate() { return createdDate; }
-    public long getUpdatedDate() { return updatedDate; }
-    public double getAverageRating() { return averageRating; }
-    public int getRatingCount() { return ratingCount; }
-    public int getViewCount() { return viewCount; }
-    public int getCookCount() { return cookCount; }
-    public boolean isApproved() { return isApproved; }
-    public boolean isFeatured() { return isFeatured; }
-    public double getProtein() { return protein; }
-    public double getCarbs() { return carbs; }
-    public double getFat() { return fat; }
-    public double getFiber() { return fiber; }
-    public double getSugar() { return sugar; }
-    public double getSodium() { return sodium; }
-    public Map<String, String> getTags() { return tags; }
-
-    // Setters
-    public void setRecipeId(String recipeId) { this.recipeId = recipeId; }
-    public void setRecipeName(String recipeName) { this.recipeName = recipeName; }
-    public void setDescription(String description) { this.description = description; }
-    public void setProviderId(String providerId) { this.providerId = providerId; }
-    public void setProviderName(String providerName) { this.providerName = providerName; }
-    public void setIngredients(Map<String, String> ingredients) { this.ingredients = ingredients; }
-    public void setIngredientDetails(Map<String, IngredientDetail> ingredientDetails) {
-        this.ingredientDetails = ingredientDetails;
-    }
-    public void setInstructions(String instructions) { this.instructions = instructions; }
-    public void setCalories(int calories) { this.calories = calories; }
-    public void setHealthScore(double healthScore) { this.healthScore = healthScore; }
-    public void setPreparationTime(int preparationTime) { this.preparationTime = preparationTime; }
-    public void setCookingTime(int cookingTime) { this.cookingTime = cookingTime; }
-    public void setServings(int servings) { this.servings = servings; }
-    public void setCategory(String category) { this.category = category; }
-    public void setCuisine(String cuisine) { this.cuisine = cuisine; }
-    public void setDifficulty(String difficulty) { this.difficulty = difficulty; }
-    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
-    public void setCreatedDate(long createdDate) { this.createdDate = createdDate; }
-    public void setUpdatedDate(long updatedDate) { this.updatedDate = updatedDate; }
-    public void setAverageRating(double averageRating) { this.averageRating = averageRating; }
-    public void setRatingCount(int ratingCount) { this.ratingCount = ratingCount; }
-    public void setViewCount(int viewCount) { this.viewCount = viewCount; }
-    public void setCookCount(int cookCount) { this.cookCount = cookCount; }
-    public void setApproved(boolean approved) { isApproved = approved; }
-    public void setFeatured(boolean featured) { isFeatured = featured; }
-    public void setProtein(double protein) { this.protein = protein; }
-    public void setCarbs(double carbs) { this.carbs = carbs; }
-    public void setFat(double fat) { this.fat = fat; }
-    public void setFiber(double fiber) { this.fiber = fiber; }
-    public void setSugar(double sugar) { this.sugar = sugar; }
-    public void setSodium(double sodium) { this.sodium = sodium; }
-    public void setTags(Map<String, String> tags) { this.tags = tags; }
-
-    @Exclude
-    public int getTotalTime() {
-        return preparationTime + cookingTime;
-    }
-
-    @Exclude
-    public List<String> getIngredientsList() {
-        return new ArrayList<>(ingredients.values());
-    }
-
-    @Exclude
-    public List<String> getTagsList() {
-        return new ArrayList<>(tags.values());
-    }
-
-    // Helper methods to convert List to Map
-    @Exclude
-    public void setIngredientsFromList(List<String> ingredientList) {
-        this.ingredients = new HashMap<>();
-        for (int i = 0; i < ingredientList.size(); i++) {
-            this.ingredients.put(String.valueOf(i), ingredientList.get(i));
-        }
-    }
-
-    @Exclude
-    public void setTagsFromList(List<String> tagList) {
-        this.tags = new HashMap<>();
-        for (int i = 0; i < tagList.size(); i++) {
-            this.tags.put(String.valueOf(i), tagList.get(i));
-        }
-    }
-
-    @IgnoreExtraProperties
+    // Ingredient Detail inner class
     public static class IngredientDetail implements Serializable {
         private String name;
         private String quantity;
@@ -187,4 +75,122 @@ public class Recipe implements Serializable {
         public String getUnit() { return unit; }
         public void setUnit(String unit) { this.unit = unit; }
     }
+
+    // Helper method to convert list to map
+    @Exclude
+    public void setIngredientsFromList(List<String> ingredientsList) {
+        this.ingredients = new HashMap<>();
+        for (int i = 0; i < ingredientsList.size(); i++) {
+            this.ingredients.put(String.valueOf(i), ingredientsList.get(i));
+        }
+    }
+
+    // Helper method to add a rating
+    @Exclude
+    public void addRating(String userId, double rating) {
+        if (userRatings == null) {
+            userRatings = new HashMap<>();
+        }
+        userRatings.put(userId, rating);
+        calculateAverageRating();
+    }
+
+    // Calculate average rating from all user ratings
+    @Exclude
+    private void calculateAverageRating() {
+        if (userRatings == null || userRatings.isEmpty()) {
+            averageRating = 0.0;
+            totalRatings = 0;
+            return;
+        }
+
+        double sum = 0;
+        for (Double rating : userRatings.values()) {
+            sum += rating;
+        }
+        totalRatings = userRatings.size();
+        averageRating = sum / totalRatings;
+    }
+
+    // All Getters and Setters
+    public String getRecipeId() { return recipeId; }
+    public void setRecipeId(String recipeId) { this.recipeId = recipeId; }
+
+    public String getRecipeName() { return recipeName; }
+    public void setRecipeName(String recipeName) { this.recipeName = recipeName; }
+
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+
+    public String getInstructions() { return instructions; }
+    public void setInstructions(String instructions) { this.instructions = instructions; }
+
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+
+    public String getProviderId() { return providerId; }
+    public void setProviderId(String providerId) { this.providerId = providerId; }
+
+    public String getProviderName() { return providerName; }
+    public void setProviderName(String providerName) { this.providerName = providerName; }
+
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
+
+    public String getDifficulty() { return difficulty; }
+    public void setDifficulty(String difficulty) { this.difficulty = difficulty; }
+
+    public String getCuisine() { return cuisine; }
+    public void setCuisine(String cuisine) { this.cuisine = cuisine; }
+
+    public int getCalories() { return calories; }
+    public void setCalories(int calories) { this.calories = calories; }
+
+    public int getPreparationTime() { return preparationTime; }
+    public void setPreparationTime(int preparationTime) { this.preparationTime = preparationTime; }
+
+    public int getCookingTime() { return cookingTime; }
+    public void setCookingTime(int cookingTime) { this.cookingTime = cookingTime; }
+
+    public int getServings() { return servings; }
+    public void setServings(int servings) { this.servings = servings; }
+
+    public double getHealthScore() { return healthScore; }
+    public void setHealthScore(double healthScore) { this.healthScore = healthScore; }
+
+    public double getProtein() { return protein; }
+    public void setProtein(double protein) { this.protein = protein; }
+
+    public double getCarbs() { return carbs; }
+    public void setCarbs(double carbs) { this.carbs = carbs; }
+
+    public double getFat() { return fat; }
+    public void setFat(double fat) { this.fat = fat; }
+
+    public double getFiber() { return fiber; }
+    public void setFiber(double fiber) { this.fiber = fiber; }
+
+    // Rating getters and setters
+    public double getAverageRating() { return averageRating; }
+    public void setAverageRating(double averageRating) { this.averageRating = averageRating; }
+
+    public int getTotalRatings() { return totalRatings; }
+    public void setTotalRatings(int totalRatings) { this.totalRatings = totalRatings; }
+
+    public Map<String, Double> getUserRatings() { return userRatings; }
+    public void setUserRatings(Map<String, Double> userRatings) { this.userRatings = userRatings; }
+
+    public Map<String, String> getIngredients() { return ingredients; }
+    public void setIngredients(Map<String, String> ingredients) { this.ingredients = ingredients; }
+
+    public Map<String, IngredientDetail> getIngredientDetails() { return ingredientDetails; }
+    public void setIngredientDetails(Map<String, IngredientDetail> ingredientDetails) {
+        this.ingredientDetails = ingredientDetails;
+    }
+
+    public boolean isApproved() { return approved; }
+    public void setApproved(boolean approved) { this.approved = approved; }
+
+    public long getCreatedAt() { return createdAt; }
+    public void setCreatedAt(long createdAt) { this.createdAt = createdAt; }
 }

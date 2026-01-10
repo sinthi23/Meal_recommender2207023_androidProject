@@ -24,6 +24,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.example.mealrecmmenderandroid.R;
 import com.example.mealrecmmenderandroid.activities.consumer.AnalyticsActivity;
+import com.example.mealrecmmenderandroid.activities.provider.BrowseRecipesActivity;
 import com.example.mealrecmmenderandroid.activities.consumer.CookHistoryActivity;
 import com.example.mealrecmmenderandroid.activities.consumer.IngredientSelectionActivity;
 import com.example.mealrecmmenderandroid.activities.consumer.ProfileActivity;
@@ -127,7 +128,7 @@ public class MainActivity extends AppCompatActivity
         recipeAdapter = new RecipeAdapter(this, new ArrayList<>(),
                 selectedIngredients, recipe -> {
             Intent intent = new Intent(this, RecipeDetailActivity.class);
-            intent.putExtra("recipe", recipe);
+            intent.putExtra("recipe_id", recipe.getRecipeId());
             startActivity(intent);
         });
         binding.recipesRecyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -136,6 +137,12 @@ public class MainActivity extends AppCompatActivity
 
     private void setupListeners() {
         binding.selectIngredientsButton.setOnClickListener(v -> showIngredientSelection());
+
+        // Add Browse Recipes button listener
+        binding.browseRecipesButton.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, BrowseRecipesActivity.class);
+            startActivity(intent);
+        });
     }
 
     private void loadRecipes() {
@@ -261,17 +268,14 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.nav_provider_dashboard) {
             startActivity(new Intent(this, ProviderDashboardActivity.class));
         } else if (id == R.id.nav_browse_recipes) {
-            // Create BrowseRecipesActivity or use another activity
-            Toast.makeText(this, "Browse Recipes - Coming Soon", Toast.LENGTH_SHORT).show();
+            // FIXED: Open BrowseRecipesActivity instead of showing toast
+            startActivity(new Intent(this, BrowseRecipesActivity.class));
         }
 
         binding.drawerLayout.closeDrawer(GravityCompat.START);
         return true;
     }
 
-    /**
-     * Handle user logout with confirmation dialog
-     */
     private void logoutUser() {
         new AlertDialog.Builder(this)
                 .setTitle("Logout")

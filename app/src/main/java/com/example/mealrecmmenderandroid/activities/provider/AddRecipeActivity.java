@@ -14,7 +14,6 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.chip.Chip;
-import com.google.firebase.storage.StorageReference;
 import com.example.mealrecmmenderandroid.R;
 import com.example.mealrecmmenderandroid.databinding.ActivityAddRecipeBinding;
 import com.example.mealrecmmenderandroid.models.Recipe;
@@ -25,7 +24,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 public class AddRecipeActivity extends AppCompatActivity {
 
@@ -35,7 +33,6 @@ public class AddRecipeActivity extends AppCompatActivity {
     private Uri selectedImageUri;
     private List<String> ingredientsList;
     private List<Recipe.IngredientDetail> ingredientDetailsList;
-    private List<String> tagsList;
 
     private ActivityResultLauncher<Intent> imagePickerLauncher;
 
@@ -49,7 +46,6 @@ public class AddRecipeActivity extends AppCompatActivity {
         sessionManager = new SessionManager(this);
         ingredientsList = new ArrayList<>();
         ingredientDetailsList = new ArrayList<>();
-        tagsList = new ArrayList<>();
 
         setupToolbar();
         setupSpinners();
@@ -63,12 +59,7 @@ public class AddRecipeActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setTitle("Add New Recipe");
         }
-        binding.toolbar.setNavigationOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onBackPressed();
-            }
-        });
+        binding.toolbar.setNavigationOnClickListener(v -> onBackPressed());
     }
 
     private void setupSpinners() {
@@ -93,26 +84,9 @@ public class AddRecipeActivity extends AppCompatActivity {
     }
 
     private void setupListeners() {
-        binding.selectImageButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                pickImage();
-            }
-        });
-
-        binding.addIngredientButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                addIngredient();
-            }
-        });
-
-        binding.submitRecipeButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                submitRecipe();
-            }
-        });
+        binding.selectImageButton.setOnClickListener(v -> pickImage());
+        binding.addIngredientButton.setOnClickListener(v -> addIngredient());
+        binding.submitRecipeButton.setOnClickListener(v -> submitRecipe());
     }
 
     private void setupImagePicker() {
@@ -163,17 +137,14 @@ public class AddRecipeActivity extends AppCompatActivity {
         chip.setText(displayText);
         chip.setCloseIconVisible(true);
         final String finalName = name;
-        chip.setOnCloseIconClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                binding.ingredientsChipGroup.removeView(chip);
-                ingredientsList.remove(finalName);
-                // Remove from details list
-                for (int i = 0; i < ingredientDetailsList.size(); i++) {
-                    if (ingredientDetailsList.get(i).getName().equals(finalName)) {
-                        ingredientDetailsList.remove(i);
-                        break;
-                    }
+        chip.setOnCloseIconClickListener(v -> {
+            binding.ingredientsChipGroup.removeView(chip);
+            ingredientsList.remove(finalName);
+            // Remove from details list
+            for (int i = 0; i < ingredientDetailsList.size(); i++) {
+                if (ingredientDetailsList.get(i).getName().equals(finalName)) {
+                    ingredientDetailsList.remove(i);
+                    break;
                 }
             }
         });
@@ -225,17 +196,12 @@ public class AddRecipeActivity extends AppCompatActivity {
             return;
         }
 
-        if (selectedImageUri == null) {
-            Toast.makeText(this, "Please select an image", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
         // Show progress
         binding.progressBar.setVisibility(View.VISIBLE);
         binding.submitRecipeButton.setEnabled(false);
 
-        // Upload image first
-        uploadImageAndCreateRecipe(
+        // Create recipe directly without image upload
+        createRecipe(
                 recipeName, description, instructions,
                 parseIntSafe(caloriesStr, 0),
                 parseIntSafe(prepTimeStr, 0),
@@ -249,36 +215,10 @@ public class AddRecipeActivity extends AppCompatActivity {
         );
     }
 
-    private void uploadImageAndCreateRecipe(String recipeName, String description,
-                                            String instructions, int calories,
-                                            int prepTime, int cookTime, int servings,
-                                            double healthScore, double protein,
-                                            double carbs, double fat, double fiber) {
-
-        String imageFileName = "recipe_" + UUID.randomUUID().toString() + ".jpg";
-        StorageReference imageRef = firebaseHelper.getRecipeImagesRef().child(imageFileName);
-
-        imageRef.putFile(selectedImageUri)
-                .addOnSuccessListener(taskSnapshot -> {
-                    imageRef.getDownloadUrl().addOnSuccessListener(uri -> {
-                        String imageUrl = uri.toString();
-                        createRecipe(recipeName, description, instructions, calories,
-                                prepTime, cookTime, servings, healthScore, protein, carbs,
-                                fat, fiber, imageUrl);
-                    });
-                })
-                .addOnFailureListener(e -> {
-                    binding.progressBar.setVisibility(View.GONE);
-                    binding.submitRecipeButton.setEnabled(true);
-                    Toast.makeText(AddRecipeActivity.this, "Failed to upload image: " + e.getMessage(),
-                            Toast.LENGTH_SHORT).show();
-                });
-    }
-
     private void createRecipe(String recipeName, String description, String instructions,
                               int calories, int prepTime, int cookTime, int servings,
                               double healthScore, double protein, double carbs,
-                              double fat, double fiber, String imageUrl) {
+                              double fat, double fiber) {
 
         String recipeId = firebaseHelper.getRecipesRef().push().getKey();
         if (recipeId == null) {
@@ -294,7 +234,7 @@ public class AddRecipeActivity extends AppCompatActivity {
         recipe.setDescription(description);
         recipe.setInstructions(instructions);
         recipe.setProviderId(sessionManager.getUserId());
-        recipe.setProviderName(sessionManager.getUserName());
+        recipe.setProviderName(sessionManager.getUserEmail()); // or getUserName() if you have it
         recipe.setCalories(calories);
         recipe.setPreparationTime(prepTime);
         recipe.setCookingTime(cookTime);
@@ -304,7 +244,18 @@ public class AddRecipeActivity extends AppCompatActivity {
         recipe.setCarbs(carbs);
         recipe.setFat(fat);
         recipe.setFiber(fiber);
+
+        // Use placeholder image URL - NO FIREBASE STORAGE
+        String imageUrl;
+        if (selectedImageUri != null) {
+            // Use placeholder with recipe name
+            imageUrl = "https://via.placeholder.com/600x400/4CAF50/FFFFFF?text=" +
+                    recipeName.replace(" ", "+");
+        } else {
+            imageUrl = "https://via.placeholder.com/600x400/4CAF50/FFFFFF?text=Recipe+Image";
+        }
         recipe.setImageUrl(imageUrl);
+
         recipe.setCategory(binding.categorySpinner.getSelectedItem().toString().toLowerCase());
         recipe.setDifficulty(binding.difficultySpinner.getSelectedItem().toString().toLowerCase());
         recipe.setCuisine(binding.cuisineSpinner.getSelectedItem().toString());
@@ -320,7 +271,8 @@ public class AddRecipeActivity extends AppCompatActivity {
         recipe.setIngredientDetails(detailsMap);
 
         // Admin approval required
-        recipe.setApproved(false);
+        recipe.setApproved(true); // Auto-approve for now since no admin system yet
+        recipe.setCreatedAt(System.currentTimeMillis());
 
         // Save to database
         firebaseHelper.getRecipeRef(recipeId).setValue(recipe)
@@ -330,14 +282,15 @@ public class AddRecipeActivity extends AppCompatActivity {
 
                     binding.progressBar.setVisibility(View.GONE);
                     Toast.makeText(AddRecipeActivity.this,
-                            "Recipe submitted! Waiting for admin approval.",
+                            "Recipe added successfully!",
                             Toast.LENGTH_LONG).show();
                     finish();
                 })
                 .addOnFailureListener(e -> {
                     binding.progressBar.setVisibility(View.GONE);
                     binding.submitRecipeButton.setEnabled(true);
-                    Toast.makeText(AddRecipeActivity.this, "Failed to create recipe: " + e.getMessage(),
+                    Toast.makeText(AddRecipeActivity.this,
+                            "Failed to create recipe: " + e.getMessage(),
                             Toast.LENGTH_SHORT).show();
                 });
     }
@@ -364,7 +317,9 @@ public class AddRecipeActivity extends AppCompatActivity {
                     @Override
                     public void onComplete(com.google.firebase.database.DatabaseError error,
                                            boolean committed,
-                                           com.google.firebase.database.DataSnapshot snapshot) {}
+                                           com.google.firebase.database.DataSnapshot snapshot) {
+                        // Transaction completed
+                    }
                 });
     }
 

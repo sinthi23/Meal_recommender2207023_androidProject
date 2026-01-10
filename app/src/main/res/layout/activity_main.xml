@@ -39,9 +39,10 @@
                     android:id="@+id/selectIngredientsButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Select Ingredients"
+                    android:text="SELECT INGREDIENTS"
                     android:textSize="16sp"
-                    app:icon="@drawable/ic_add" />
+                    app:icon="@drawable/ic_add"
+                    app:iconGravity="start" />
 
                 <!-- Selected Ingredients Chips -->
                 <com.google.android.material.chip.ChipGroup
@@ -58,6 +59,7 @@
                     android:layout_marginTop="32dp"
                     android:gravity="center"
                     android:text="Select ingredients to see matching recipes"
+                    android:textColor="@color/text_secondary"
                     android:textSize="16sp"
                     android:visibility="visible" />
 
@@ -67,7 +69,22 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
+                    android:clipToPadding="false"
+                    android:paddingBottom="16dp"
                     android:visibility="gone" />
+
+                <!-- Browse All Recipes Button with Icon -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/browseRecipesButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:text="Browse All Recipes"
+                    android:textSize="16sp"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    app:icon="@drawable/ic_recipe"
+                    app:iconGravity="start"
+                    app:strokeColor="@color/primary_color" />
 
             </LinearLayout>
 

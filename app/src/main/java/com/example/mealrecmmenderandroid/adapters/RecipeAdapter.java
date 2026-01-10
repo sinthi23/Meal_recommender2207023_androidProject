@@ -2,7 +2,6 @@ package com.example.mealrecmmenderandroid.adapters;
 
 import android.content.Context;
 import android.view.LayoutInflater;
-import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
@@ -13,8 +12,9 @@ import com.example.mealrecmmenderandroid.databinding.ItemRecipeBinding;
 import com.example.mealrecmmenderandroid.models.Recipe;
 import com.example.mealrecmmenderandroid.utils.ImageHelper;
 
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.RecipeViewHolder> {
@@ -72,16 +72,22 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.RecipeView
         public void bind(Recipe recipe) {
             binding.recipeNameTextView.setText(recipe.getRecipeName());
             binding.caloriesTextView.setText(recipe.getCalories() + " cal");
-            binding.timeTextView.setText(recipe.getTotalTime() + " min");
+
+            // Calculate total time - FIXED
+            int totalTime = recipe.getPreparationTime() + recipe.getCookingTime();
+            binding.timeTextView.setText(totalTime + " min");
+
             binding.healthScoreTextView.setText("Health: " +
                     String.format("%.0f%%", recipe.getHealthScore()));
             binding.ratingBar.setRating((float) recipe.getAverageRating());
 
             // Load image
-            ImageHelper.loadImage(context, recipe.getImageUrl(), binding.recipeImageView);
+            if (recipe.getImageUrl() != null && !recipe.getImageUrl().isEmpty()) {
+                ImageHelper.loadImage(context, recipe.getImageUrl(), binding.recipeImageView);
+            }
 
-            // Calculate missing ingredients
-            List<String> recipeIngredients = recipe.getIngredientsList();
+            // Calculate missing ingredients - FIXED
+            List<String> recipeIngredients = getRecipeIngredientsList(recipe);
             int missingCount = calculateMissingIngredients(recipeIngredients);
 
             if (missingCount == 0) {
@@ -97,10 +103,43 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.RecipeView
             // Difficulty badge
             setDifficultyBadge(recipe.getDifficulty());
 
-            itemView.setOnClickListener(v -> listener.onRecipeClick(recipe));
+            itemView.setOnClickListener(v -> {
+                if (listener != null) {
+                    listener.onRecipeClick(recipe);
+                }
+            });
+        }
+
+        // Helper method to get ingredients list from Recipe
+        private List<String> getRecipeIngredientsList(Recipe recipe) {
+            List<String> ingredientsList = new ArrayList<>();
+
+            // Try to get from ingredients map
+            if (recipe.getIngredients() != null && !recipe.getIngredients().isEmpty()) {
+                ingredientsList.addAll(recipe.getIngredients().values());
+            }
+
+            // If empty, try ingredient details
+            if (ingredientsList.isEmpty() && recipe.getIngredientDetails() != null) {
+                for (Recipe.IngredientDetail detail : recipe.getIngredientDetails().values()) {
+                    if (detail.getName() != null) {
+                        ingredientsList.add(detail.getName());
+                    }
+                }
+            }
+
+            return ingredientsList;
         }
 
         private int calculateMissingIngredients(List<String> recipeIngredients) {
+            if (recipeIngredients == null || recipeIngredients.isEmpty()) {
+                return 0;
+            }
+
+            if (selectedIngredients == null || selectedIngredients.isEmpty()) {
+                return recipeIngredients.size();
+            }
+
             int missingCount = 0;
             for (String ingredient : recipeIngredients) {
                 boolean found = false;
@@ -119,7 +158,12 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.RecipeView
         }
 
         private void setDifficultyBadge(String difficulty) {
-            if (difficulty == null) return;
+            if (difficulty == null) {
+                binding.difficultyBadge.setText("Medium");
+                binding.difficultyBadge.setBackgroundColor(
+                        context.getResources().getColor(R.color.difficulty_medium));
+                return;
+            }
 
             switch (difficulty.toLowerCase()) {
                 case "easy":
@@ -136,6 +180,11 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.RecipeView
                     binding.difficultyBadge.setText("Hard");
                     binding.difficultyBadge.setBackgroundColor(
                             context.getResources().getColor(R.color.difficulty_hard));
+                    break;
+                default:
+                    binding.difficultyBadge.setText(difficulty);
+                    binding.difficultyBadge.setBackgroundColor(
+                            context.getResources().getColor(R.color.difficulty_medium));
                     break;
             }
         }

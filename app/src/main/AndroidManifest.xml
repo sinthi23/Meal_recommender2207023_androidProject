@@ -79,6 +79,10 @@
         <activity
             android:name=".activities.provider.ProviderDashboardActivity"
             android:exported="false" />
+        <activity
+            android:name=".activities.provider.BrowseRecipesActivity"
+            android:exported="false"
+            android:label="Browse Recipes" />
 
         <activity
             android:name=".activities.provider.AddRecipeActivity"
