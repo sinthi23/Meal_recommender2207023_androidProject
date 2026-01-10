@@ -63,8 +63,20 @@ public class AddRecipeActivity extends AppCompatActivity {
     }
 
     private void setupSpinners() {
-        // Category spinner
-        String[] categories = {"Breakfast", "Lunch", "Dinner", "Snack", "Dessert"};
+        // Category spinner - UPDATED WITH NEW CATEGORIES
+        String[] categories = {
+                "Spicy",
+                "Dessert",
+                "Snacks",
+                "Heavy Food",
+                "Light Meal",
+                "Appetizer",
+                "Main Course",
+                "Soup",
+                "Salad",
+                "Beverage",
+                "Fast Food"
+        };
         ArrayAdapter<String> categoryAdapter = new ArrayAdapter<>(
                 this, android.R.layout.simple_spinner_dropdown_item, categories);
         binding.categorySpinner.setAdapter(categoryAdapter);
@@ -75,9 +87,26 @@ public class AddRecipeActivity extends AppCompatActivity {
                 this, android.R.layout.simple_spinner_dropdown_item, difficulties);
         binding.difficultySpinner.setAdapter(difficultyAdapter);
 
-        // Cuisine spinner
-        String[] cuisines = {"American", "Italian", "Chinese", "Indian", "Mexican",
-                "Mediterranean", "Japanese", "Thai", "French", "Other"};
+        // Cuisine spinner - EXPANDED OPTIONS
+        String[] cuisines = {
+                "American",
+                "Italian",
+                "Chinese",
+                "Indian",
+                "Mexican",
+                "Mediterranean",
+                "Japanese",
+                "Thai",
+                "French",
+                "Bangladeshi",
+                "Korean",
+                "Vietnamese",
+                "Middle Eastern",
+                "Greek",
+                "Spanish",
+                "Turkish",
+                "Other"
+        };
         ArrayAdapter<String> cuisineAdapter = new ArrayAdapter<>(
                 this, android.R.layout.simple_spinner_dropdown_item, cuisines);
         binding.cuisineSpinner.setAdapter(cuisineAdapter);
@@ -234,7 +263,7 @@ public class AddRecipeActivity extends AppCompatActivity {
         recipe.setDescription(description);
         recipe.setInstructions(instructions);
         recipe.setProviderId(sessionManager.getUserId());
-        recipe.setProviderName(sessionManager.getUserEmail()); // or getUserName() if you have it
+        recipe.setProviderName(sessionManager.getUserEmail());
         recipe.setCalories(calories);
         recipe.setPreparationTime(prepTime);
         recipe.setCookingTime(cookTime);
@@ -256,7 +285,8 @@ public class AddRecipeActivity extends AppCompatActivity {
         }
         recipe.setImageUrl(imageUrl);
 
-        recipe.setCategory(binding.categorySpinner.getSelectedItem().toString().toLowerCase());
+        // Don't convert category to lowercase - keep original case
+        recipe.setCategory(binding.categorySpinner.getSelectedItem().toString());
         recipe.setDifficulty(binding.difficultySpinner.getSelectedItem().toString().toLowerCase());
         recipe.setCuisine(binding.cuisineSpinner.getSelectedItem().toString());
 
