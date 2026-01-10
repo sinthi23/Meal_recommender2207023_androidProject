@@ -125,10 +125,11 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void setupRecyclerView() {
-        recipeAdapter = new RecipeAdapter(this, new ArrayList<>(),
+        // FIXED: Removed Context parameter
+        recipeAdapter = new RecipeAdapter(new ArrayList<>(),
                 selectedIngredients, recipe -> {
             Intent intent = new Intent(this, RecipeDetailActivity.class);
-            intent.putExtra("recipe_id", recipe.getRecipeId());
+            intent.putExtra("recipeId", recipe.getRecipeId());
             startActivity(intent);
         });
         binding.recipesRecyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -147,27 +148,49 @@ public class MainActivity extends AppCompatActivity
 
     private void loadRecipes() {
         binding.progressBar.setVisibility(View.VISIBLE);
+
+        Log.d(TAG, "=== Loading Recipes from Firebase ===");
+
         firebaseHelper.getRecipesRef().addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 allRecipes.clear();
+
+                Log.d(TAG, "Total recipes in database: " + snapshot.getChildrenCount());
+
+                int successCount = 0;
+                int errorCount = 0;
+
                 for (DataSnapshot data : snapshot.getChildren()) {
                     try {
                         Recipe recipe = data.getValue(Recipe.class);
                         if (recipe != null) {
                             allRecipes.add(recipe);
+                            successCount++;
+                            Log.d(TAG, "✓ Loaded recipe: " + recipe.getRecipeName());
+                        } else {
+                            errorCount++;
+                            Log.w(TAG, "✗ Recipe is null for key: " + data.getKey());
                         }
                     } catch (Exception e) {
-                        // Skip recipes with data structure issues
-                        Log.e(TAG, "Error parsing recipe: " + e.getMessage());
+                        errorCount++;
+                        Log.e(TAG, "✗ Error parsing recipe: " + e.getMessage());
+                        e.printStackTrace();
                     }
                 }
+
+                Log.d(TAG, "=== Load Summary ===");
+                Log.d(TAG, "Successfully loaded: " + successCount);
+                Log.d(TAG, "Errors: " + errorCount);
+                Log.d(TAG, "Total in list: " + allRecipes.size());
+
                 binding.progressBar.setVisibility(View.GONE);
                 filterRecipes();
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
+                Log.e(TAG, "Database error: " + error.getMessage());
                 binding.progressBar.setVisibility(View.GONE);
                 Toast.makeText(MainActivity.this, "Error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
             }
@@ -210,41 +233,70 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void filterRecipes() {
+        Log.d(TAG, "=== Filtering Recipes ===");
+        Log.d(TAG, "Selected ingredients: " + selectedIngredients.size());
+        Log.d(TAG, "Total recipes: " + allRecipes.size());
+
         if (selectedIngredients.isEmpty()) {
             binding.noRecipesTextView.setVisibility(View.VISIBLE);
             binding.noRecipesTextView.setText("Select ingredients to see recommendations");
             binding.recipesRecyclerView.setVisibility(View.GONE);
             recipeAdapter.updateRecipes(new ArrayList<>());
+            Log.d(TAG, "No ingredients selected");
             return;
         }
 
         List<Recipe> filtered = new ArrayList<>();
+
         for (Recipe r : allRecipes) {
-            if (r.getIngredients() != null) {
-                boolean match = false;
-                for (String ingredientValue : r.getIngredients().values()) {
-                    for (String selectedIng : selectedIngredients) {
-                        if (ingredientValue.toLowerCase().contains(selectedIng.toLowerCase())) {
-                            match = true;
-                            break;
+            try {
+                // Use helper method to get ingredients list - FIXED
+                List<String> recipeIngredients = r.getIngredientsList();
+
+                if (recipeIngredients != null && !recipeIngredients.isEmpty()) {
+                    boolean match = false;
+
+                    for (String ingredientValue : recipeIngredients) {
+                        if (ingredientValue == null || ingredientValue.isEmpty()) continue;
+
+                        for (String selectedIng : selectedIngredients) {
+                            if (selectedIng == null || selectedIng.isEmpty()) continue;
+
+                            if (ingredientValue.toLowerCase().contains(selectedIng.toLowerCase()) ||
+                                    selectedIng.toLowerCase().contains(ingredientValue.toLowerCase())) {
+                                match = true;
+                                Log.d(TAG, "Match found: " + r.getRecipeName() +
+                                        " - ingredient: " + ingredientValue +
+                                        " matches: " + selectedIng);
+                                break;
+                            }
                         }
+                        if (match) break;
                     }
-                    if (match) break;
+
+                    if (match) {
+                        filtered.add(r);
+                    }
+                } else {
+                    Log.d(TAG, "Recipe has no ingredients: " + r.getRecipeName());
                 }
-                if (match) {
-                    filtered.add(r);
-                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error filtering recipe: " + e.getMessage());
+                e.printStackTrace();
             }
         }
 
+        Log.d(TAG, "Filtered recipes count: " + filtered.size());
+
         if (filtered.isEmpty()) {
             binding.noRecipesTextView.setVisibility(View.VISIBLE);
-            binding.noRecipesTextView.setText("No matches found");
+            binding.noRecipesTextView.setText("No matches found. Try selecting different ingredients.");
             binding.recipesRecyclerView.setVisibility(View.GONE);
         } else {
             binding.noRecipesTextView.setVisibility(View.GONE);
             binding.recipesRecyclerView.setVisibility(View.VISIBLE);
         }
+
         recipeAdapter.updateRecipes(filtered);
     }
 
@@ -268,7 +320,6 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.nav_provider_dashboard) {
             startActivity(new Intent(this, ProviderDashboardActivity.class));
         } else if (id == R.id.nav_browse_recipes) {
-            // FIXED: Open BrowseRecipesActivity instead of showing toast
             startActivity(new Intent(this, BrowseRecipesActivity.class));
         }
 

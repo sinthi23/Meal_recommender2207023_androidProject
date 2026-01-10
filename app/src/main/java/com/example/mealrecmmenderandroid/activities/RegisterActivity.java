@@ -2,216 +2,189 @@ package com.example.mealrecmmenderandroid.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.TextUtils;
+import android.util.Patterns;
 import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.example.mealrecmmenderandroid.R;
-import com.example.mealrecmmenderandroid.databinding.ActivityRegisterBinding;
-import com.example.mealrecmmenderandroid.models.User;
-import com.example.mealrecmmenderandroid.helpers.FirebaseHelper;
+import com.example.mealrecmmenderandroid.activities.provider.ProviderDashboardActivity;
 import com.example.mealrecmmenderandroid.helpers.SessionManager;
-import com.example.mealrecmmenderandroid.utils.ValidationHelper;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.AuthResult;
+import com.example.mealrecmmenderandroid.models.User;
 
 public class RegisterActivity extends AppCompatActivity {
 
-    private ActivityRegisterBinding binding;
-    private FirebaseHelper firebaseHelper;
+    private TextInputEditText etFullName, etEmail, etPhone, etPassword, etConfirmPassword;
+    private RadioGroup rgUserType;
+    private MaterialButton btnRegister;
+    private TextView tvLogin;
+    private ProgressBar progressBar;
+    private FirebaseAuth mAuth;
+    private DatabaseReference usersRef;
     private SessionManager sessionManager;
-    private String selectedUserType = "consumer";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        binding = ActivityRegisterBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
+        setContentView(R.layout.activity_register);
 
-        firebaseHelper = FirebaseHelper.getInstance();
+        // Initialize Firebase
+        mAuth = FirebaseAuth.getInstance();
+        usersRef = FirebaseDatabase.getInstance().getReference("users");
         sessionManager = new SessionManager(this);
 
+        // Initialize views
+        initViews();
+
+        // Setup listeners
         setupListeners();
     }
 
+    private void initViews() {
+        etFullName = findViewById(R.id.et_full_name);
+        etEmail = findViewById(R.id.et_email);
+        etPhone = findViewById(R.id.et_phone);
+        etPassword = findViewById(R.id.et_password);
+        etConfirmPassword = findViewById(R.id.et_confirm_password);
+        rgUserType = findViewById(R.id.rg_user_type);
+        btnRegister = findViewById(R.id.btn_register);
+        tvLogin = findViewById(R.id.tv_login);
+        progressBar = findViewById(R.id.progress_bar);
+    }
+
     private void setupListeners() {
-        binding.registerButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                registerUser();
-            }
-        });
+        btnRegister.setOnClickListener(v -> registerUser());
 
-        binding.loginTextView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
-            }
-        });
-
-        binding.userTypeRadioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(RadioGroup group, int checkedId) {
-                RadioButton radioButton = findViewById(checkedId);
-                if (radioButton != null) {
-                    selectedUserType = radioButton.getTag().toString();
-
-                    // Show/hide business fields for providers
-                    if ("provider".equals(selectedUserType)) {
-                        binding.businessNameLayout.setVisibility(View.VISIBLE);
-                    } else {
-                        binding.businessNameLayout.setVisibility(View.GONE);
-                    }
-                }
-            }
+        tvLogin.setOnClickListener(v -> {
+            startActivity(new Intent(RegisterActivity.this, LoginActivity.class));
+            finish();
         });
     }
 
     private void registerUser() {
-        String name = "";
-        String email = "";
-        String phone = "";
-        String password = "";
-        String confirmPassword = "";
-        String businessName = "";
+        String fullName = etFullName.getText().toString().trim();
+        String email = etEmail.getText().toString().trim();
+        String phone = etPhone.getText().toString().trim();
+        String password = etPassword.getText().toString().trim();
+        String confirmPassword = etConfirmPassword.getText().toString().trim();
 
-        if (binding.nameEditText.getText() != null) {
-            name = binding.nameEditText.getText().toString().trim();
-        }
-        if (binding.emailEditText.getText() != null) {
-            email = binding.emailEditText.getText().toString().trim();
-        }
-        if (binding.phoneEditText.getText() != null) {
-            phone = binding.phoneEditText.getText().toString().trim();
-        }
-        if (binding.passwordEditText.getText() != null) {
-            password = binding.passwordEditText.getText().toString().trim();
-        }
-        if (binding.confirmPasswordEditText.getText() != null) {
-            confirmPassword = binding.confirmPasswordEditText.getText().toString().trim();
-        }
-        if (binding.businessNameEditText.getText() != null) {
-            businessName = binding.businessNameEditText.getText().toString().trim();
-        }
-
-        // Validate inputs
-        String nameError = ValidationHelper.getNameError(name);
-        if (nameError != null) {
-            binding.nameEditText.setError(nameError);
-            binding.nameEditText.requestFocus();
+        // Validation
+        if (TextUtils.isEmpty(fullName)) {
+            etFullName.setError("Full name is required");
+            etFullName.requestFocus();
             return;
         }
 
-        String emailError = ValidationHelper.getEmailError(email);
-        if (emailError != null) {
-            binding.emailEditText.setError(emailError);
-            binding.emailEditText.requestFocus();
+        if (TextUtils.isEmpty(email) || !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            etEmail.setError("Valid email is required");
+            etEmail.requestFocus();
             return;
         }
 
-        String phoneError = ValidationHelper.getPhoneError(phone);
-        if (phoneError != null) {
-            binding.phoneEditText.setError(phoneError);
-            binding.phoneEditText.requestFocus();
+        if (TextUtils.isEmpty(phone) || phone.length() < 10) {
+            etPhone.setError("Valid phone number is required");
+            etPhone.requestFocus();
             return;
         }
 
-        String passwordError = ValidationHelper.getPasswordError(password);
-        if (passwordError != null) {
-            binding.passwordEditText.setError(passwordError);
-            binding.passwordEditText.requestFocus();
+        if (TextUtils.isEmpty(password) || password.length() < 6) {
+            etPassword.setError("Password must be at least 6 characters");
+            etPassword.requestFocus();
             return;
         }
 
         if (!password.equals(confirmPassword)) {
-            binding.confirmPasswordEditText.setError("Passwords do not match");
-            binding.confirmPasswordEditText.requestFocus();
+            etConfirmPassword.setError("Passwords do not match");
+            etConfirmPassword.requestFocus();
             return;
         }
 
-        if ("provider".equals(selectedUserType) && businessName.isEmpty()) {
-            binding.businessNameEditText.setError("Business name is required");
-            binding.businessNameEditText.requestFocus();
+        // Check if user type is selected
+        if (rgUserType.getCheckedRadioButtonId() == -1) {
+            Toast.makeText(this, "Please select account type", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        showLoading(true);
+        // Get selected user type
+        int selectedId = rgUserType.getCheckedRadioButtonId();
+        RadioButton selectedRadio = findViewById(selectedId);
+        String userType = selectedRadio.getText().toString().toLowerCase();
+
+        // Show progress
+        progressBar.setVisibility(View.VISIBLE);
+        btnRegister.setEnabled(false);
 
         // Create Firebase Auth user
-        final String finalName = name;
-        final String finalEmail = email;
-        final String finalPhone = phone;
-        final String finalBusinessName = businessName;
+        mAuth.createUserWithEmailAndPassword(email, password)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        FirebaseUser firebaseUser = mAuth.getCurrentUser();
+                        if (firebaseUser != null) {
+                            // Create user object
+                            User user = new User(
+                                    firebaseUser.getUid(),
+                                    fullName,
+                                    email,
+                                    phone,
+                                    userType
+                            );
 
-        firebaseHelper.getAuth().createUserWithEmailAndPassword(email, password)
-                .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
-                        if (task.isSuccessful()) {
-                            String userId = firebaseHelper.getCurrentUserId();
-                            createUserInDatabase(userId, finalName, finalEmail, finalPhone, finalBusinessName);
-                        } else {
-                            showLoading(false);
-                            String errorMessage = "Unknown error";
-                            if (task.getException() != null) {
-                                errorMessage = task.getException().getMessage();
-                            }
-                            Toast.makeText(RegisterActivity.this,
-                                    "Registration failed: " + errorMessage,
-                                    Toast.LENGTH_LONG).show();
+                            // Save to database
+                            usersRef.child(firebaseUser.getUid()).setValue(user)
+                                    .addOnCompleteListener(dbTask -> {
+                                        progressBar.setVisibility(View.GONE);
+                                        btnRegister.setEnabled(true);
+
+                                        if (dbTask.isSuccessful()) {
+                                            // Save session
+                                            sessionManager.createLoginSession(
+                                                    firebaseUser.getUid(),
+                                                    userType,
+                                                    fullName,
+                                                    email
+                                            );
+
+                                            Toast.makeText(RegisterActivity.this,
+                                                    "Registration successful!",
+                                                    Toast.LENGTH_SHORT).show();
+
+                                            // Route based on user type
+                                            Intent intent;
+                                            if ("provider".equalsIgnoreCase(userType)) {
+                                                intent = new Intent(RegisterActivity.this, ProviderDashboardActivity.class);
+                                            } else {
+                                                intent = new Intent(RegisterActivity.this, MainActivity.class);
+                                            }
+
+                                            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                            startActivity(intent);
+                                            finish();
+                                        } else {
+                                            Toast.makeText(RegisterActivity.this,
+                                                    "Failed to save user data: " + dbTask.getException().getMessage(),
+                                                    Toast.LENGTH_LONG).show();
+                                        }
+                                    });
                         }
-                    }
-                });
-    }
-
-    private void createUserInDatabase(String userId, String name, String email,
-                                      String phone, String businessName) {
-        User user = new User(userId, email, name, selectedUserType);
-        user.setPhoneNumber(phone);
-
-        if ("provider".equals(selectedUserType)) {
-            user.setBusinessName(businessName);
-        }
-
-        firebaseHelper.getUserRef(userId).setValue(user)
-                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void aVoid) {
-                        // Save session
-                        sessionManager.createLoginSession(userId, selectedUserType, name, email);
-
-                        showLoading(false);
+                    } else {
+                        progressBar.setVisibility(View.GONE);
+                        btnRegister.setEnabled(true);
                         Toast.makeText(RegisterActivity.this,
-                                "Registration successful!",
-                                Toast.LENGTH_SHORT).show();
-
-                        // Navigate to main activity
-                        Intent intent = new Intent(RegisterActivity.this, MainActivity.class);
-                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                        startActivity(intent);
-                        finish();
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        showLoading(false);
-                        Toast.makeText(RegisterActivity.this,
-                                "Failed to save user data: " + e.getMessage(),
+                                "Registration failed: " + task.getException().getMessage(),
                                 Toast.LENGTH_LONG).show();
                     }
                 });
-    }
-
-    private void showLoading(boolean show) {
-        binding.progressBar.setVisibility(show ? View.VISIBLE : View.GONE);
-        binding.registerButton.setEnabled(!show);
     }
 }
