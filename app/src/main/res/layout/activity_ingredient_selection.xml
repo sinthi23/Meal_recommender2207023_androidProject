@@ -9,10 +9,23 @@
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorPrimary"
-        app:title="Select Ingredients"
+        android:background="@color/primary_color"
+        android:elevation="4dp"
+        app:title="Add Your Ingredients"
+        app:titleTextColor="@android:color/white"
         app:navigationIcon="@drawable/ic_arrow_back" />
 
+    <!-- Instructions -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Type ingredients you have, then tap ADD"
+        android:textSize="14sp"
+        android:textColor="@color/text_secondary"
+        android:padding="12dp"
+        android:background="#F5F5F5" />
+
+    <!-- Input Section -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -24,37 +37,52 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:hint="Search ingredients..."
+            android:hint="e.g., chicken, rice, tomato"
             android:inputType="text"
+            android:imeOptions="actionDone"
             android:paddingStart="12dp"
             android:paddingEnd="12dp"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp" />
+            android:paddingTop="12dp"
+            android:paddingBottom="12dp"
+            android:background="@drawable/edittext_background" />
 
         <Button
             android:id="@+id/clearButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Clear"
+            android:text="ADD"
+            android:textSize="14sp"
             android:layout_marginStart="8dp" />
     </LinearLayout>
 
+    <!-- Selected Count -->
     <TextView
         android:id="@+id/selectedCountTextView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="0 selected"
+        android:text="0 ingredients added"
         android:padding="12dp"
-        android:textSize="14sp"
-        android:textColor="@android:color/darker_gray" />
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:textColor="@color/primary_color" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/ingredientsRecyclerView"
+    <!-- Chips Container (using RecyclerView as container) -->
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:padding="8dp" />
+        android:padding="8dp">
 
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/ingredientsRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:chipSpacing="8dp"
+            app:singleLine="false" />
+
+    </ScrollView>
+
+    <!-- Progress Bar -->
     <ProgressBar
         android:id="@+id/progressBar"
         android:layout_width="wrap_content"
@@ -62,12 +90,15 @@
         android:layout_gravity="center"
         android:visibility="gone" />
 
+    <!-- Search Button -->
     <Button
         android:id="@+id/doneButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Done"
+        android:text="ADD INGREDIENTS"
+        android:textSize="16sp"
         android:layout_margin="12dp"
+        android:padding="16dp"
         android:enabled="false" />
 
 </LinearLayout>

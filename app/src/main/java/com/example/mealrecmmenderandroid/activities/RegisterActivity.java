@@ -26,7 +26,7 @@ import com.example.mealrecmmenderandroid.models.User;
 
 public class RegisterActivity extends AppCompatActivity {
 
-    private TextInputEditText etFullName, etEmail, etPhone, etPassword, etConfirmPassword;
+    private TextInputEditText etUsername, etFullName, etEmail, etPhone, etPassword, etConfirmPassword;
     private RadioGroup rgUserType;
     private MaterialButton btnRegister;
     private TextView tvLogin;
@@ -42,7 +42,9 @@ public class RegisterActivity extends AppCompatActivity {
 
         // Initialize Firebase
         mAuth = FirebaseAuth.getInstance();
-        usersRef = FirebaseDatabase.getInstance().getReference("users");
+        usersRef = FirebaseDatabase.getInstance()
+                .getInstance("https://meal-recommender-android-9801b-default-rtdb.firebaseio.com")
+                .getReference("users");
         sessionManager = new SessionManager(this);
 
         // Initialize views
@@ -53,6 +55,7 @@ public class RegisterActivity extends AppCompatActivity {
     }
 
     private void initViews() {
+        etUsername = findViewById(R.id.et_username);
         etFullName = findViewById(R.id.et_full_name);
         etEmail = findViewById(R.id.et_email);
         etPhone = findViewById(R.id.et_phone);
@@ -74,6 +77,7 @@ public class RegisterActivity extends AppCompatActivity {
     }
 
     private void registerUser() {
+        String username = etUsername.getText().toString().trim();
         String fullName = etFullName.getText().toString().trim();
         String email = etEmail.getText().toString().trim();
         String phone = etPhone.getText().toString().trim();
@@ -81,6 +85,18 @@ public class RegisterActivity extends AppCompatActivity {
         String confirmPassword = etConfirmPassword.getText().toString().trim();
 
         // Validation
+        if (TextUtils.isEmpty(username)) {
+            etUsername.setError("Username is required");
+            etUsername.requestFocus();
+            return;
+        }
+
+        if (username.length() < 3) {
+            etUsername.setError("Username must be at least 3 characters");
+            etUsername.requestFocus();
+            return;
+        }
+
         if (TextUtils.isEmpty(fullName)) {
             etFullName.setError("Full name is required");
             etFullName.requestFocus();
@@ -132,7 +148,7 @@ public class RegisterActivity extends AppCompatActivity {
                     if (task.isSuccessful()) {
                         FirebaseUser firebaseUser = mAuth.getCurrentUser();
                         if (firebaseUser != null) {
-                            // Create user object
+                            // Create user object with username
                             User user = new User(
                                     firebaseUser.getUid(),
                                     fullName,
@@ -141,6 +157,11 @@ public class RegisterActivity extends AppCompatActivity {
                                     userType
                             );
 
+                            // Set username
+                            user.setUsername(username);
+                            user.setAccountType(userType);
+                            user.setRegistrationDate(System.currentTimeMillis());
+
                             // Save to database
                             usersRef.child(firebaseUser.getUid()).setValue(user)
                                     .addOnCompleteListener(dbTask -> {
@@ -148,16 +169,16 @@ public class RegisterActivity extends AppCompatActivity {
                                         btnRegister.setEnabled(true);
 
                                         if (dbTask.isSuccessful()) {
-                                            // Save session
+                                            // Save session with username
                                             sessionManager.createLoginSession(
                                                     firebaseUser.getUid(),
                                                     userType,
-                                                    fullName,
+                                                    username,  // Use username instead of fullName
                                                     email
                                             );
 
                                             Toast.makeText(RegisterActivity.this,
-                                                    "Registration successful!",
+                                                    "Welcome, " + username + "!",
                                                     Toast.LENGTH_SHORT).show();
 
                                             // Route based on user type

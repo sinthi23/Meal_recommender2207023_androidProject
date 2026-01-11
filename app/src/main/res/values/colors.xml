@@ -34,7 +34,7 @@
     <!-- Category Colors -->
     <color name="category_bg">#9C27B0</color>
     <color name="cuisine_bg">#3F51B5</color>
-
+    <color name="divider_color">#E0E0E0</color>
     <!-- Chip Colors -->
     <color name="chip_background">#E8F5E9</color>
 

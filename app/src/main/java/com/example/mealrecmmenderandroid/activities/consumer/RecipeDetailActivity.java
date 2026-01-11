@@ -3,21 +3,28 @@ package com.example.mealrecmmenderandroid.activities.consumer;
 import android.app.Dialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.EditText;
 import android.widget.RatingBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
 import com.example.mealrecmmenderandroid.R;
+import com.example.mealrecmmenderandroid.adapters.CommentAdapter;
 import com.example.mealrecmmenderandroid.databinding.ActivityRecipeDetailBinding;
+import com.example.mealrecmmenderandroid.models.Comment;
 import com.example.mealrecmmenderandroid.models.CookHistory;
 import com.example.mealrecmmenderandroid.models.Recipe;
 import com.example.mealrecmmenderandroid.helpers.FirebaseHelper;
@@ -25,6 +32,7 @@ import com.example.mealrecmmenderandroid.utils.ImageHelper;
 import com.example.mealrecmmenderandroid.helpers.SessionManager;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +45,10 @@ public class RecipeDetailActivity extends AppCompatActivity {
     private Recipe currentRecipe;
     private String recipeId;
 
+    // Comments
+    private CommentAdapter commentAdapter;
+    private List<Comment> commentsList;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -45,8 +57,13 @@ public class RecipeDetailActivity extends AppCompatActivity {
 
         firebaseHelper = FirebaseHelper.getInstance();
         sessionManager = new SessionManager(this);
+        commentsList = new ArrayList<>();
 
-        recipeId = getIntent().getStringExtra("recipe_id");
+        recipeId = getIntent().getStringExtra("recipeId");
+        if (recipeId == null) {
+            recipeId = getIntent().getStringExtra("recipe_id");
+        }
+
         if (recipeId == null) {
             Toast.makeText(this, "Recipe not found", Toast.LENGTH_SHORT).show();
             finish();
@@ -55,7 +72,9 @@ public class RecipeDetailActivity extends AppCompatActivity {
 
         setupToolbar();
         setupListeners();
+        setupCommentsSection();
         loadRecipe();
+        loadComments();
         incrementViewCount();
     }
 
@@ -72,6 +91,279 @@ public class RecipeDetailActivity extends AppCompatActivity {
         binding.shareButton.setOnClickListener(v -> shareRecipe());
     }
 
+    private void setupCommentsSection() {
+        CommentAdapter.OnCommentInteractionListener listener = new CommentAdapter.OnCommentInteractionListener() {
+            @Override
+            public void onReplyClick(Comment comment) {
+                showReplyDialog(comment);
+            }
+
+            @Override
+            public void onViewRepliesClick(Comment comment) {
+                showRepliesDialog(comment);
+            }
+        };
+
+        commentAdapter = new CommentAdapter(this, commentsList, listener);
+        binding.commentsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        binding.commentsRecyclerView.setAdapter(commentAdapter);
+        binding.commentsRecyclerView.setNestedScrollingEnabled(false);
+
+        binding.submitCommentButton.setOnClickListener(v -> submitComment());
+    }
+
+    private void loadComments() {
+        firebaseHelper.getRecipeCommentsRef(recipeId)
+                .orderByChild("timestamp")
+                .addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        commentsList.clear();
+                        for (DataSnapshot commentSnapshot : snapshot.getChildren()) {
+                            Comment comment = commentSnapshot.getValue(Comment.class);
+                            if (comment != null && !comment.isReply()) {  // Only top-level comments
+                                commentsList.add(comment);
+                            }
+                        }
+                        // Reverse to show newest first
+                        Collections.reverse(commentsList);
+                        commentAdapter.updateComments(commentsList);
+
+                        // Update comments count
+                        binding.commentsCountTextView.setText(commentsList.size() + " Comment" +
+                                (commentsList.size() != 1 ? "s" : ""));
+
+                        // Show/hide empty state
+                        if (commentsList.isEmpty()) {
+                            binding.commentsRecyclerView.setVisibility(View.GONE);
+                            binding.noCommentsTextView.setVisibility(View.VISIBLE);
+                        } else {
+                            binding.commentsRecyclerView.setVisibility(View.VISIBLE);
+                            binding.noCommentsTextView.setVisibility(View.GONE);
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Toast.makeText(RecipeDetailActivity.this,
+                                "Error loading comments: " + error.getMessage(),
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    private void submitComment() {
+        String commentText = binding.commentEditText.getText().toString().trim();
+        float rating = binding.commentRatingBar.getRating();
+
+        if (TextUtils.isEmpty(commentText)) {
+            binding.commentEditText.setError("Please write a comment");
+            return;
+        }
+
+        if (rating == 0) {
+            Toast.makeText(this, "Please add a rating", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String userId = sessionManager.getUserId();
+        String userName = sessionManager.getUserName();
+        String userEmail = sessionManager.getUserEmail();
+
+        String commentId = firebaseHelper.getRecipeCommentsRef(recipeId).push().getKey();
+
+        if (commentId == null) {
+            Toast.makeText(this, "Failed to submit comment", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Comment comment = new Comment(
+                commentId,
+                recipeId,
+                userId,
+                userName != null ? userName : userEmail,
+                userEmail,
+                commentText,
+                rating,
+                System.currentTimeMillis()
+        );
+
+        firebaseHelper.getRecipeCommentsRef(recipeId)
+                .child(commentId)
+                .setValue(comment)
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(this, "Comment posted!", Toast.LENGTH_SHORT).show();
+                    binding.commentEditText.setText("");
+                    binding.commentRatingBar.setRating(0);
+
+                    // Update recipe rating
+                    updateRecipeRating(rating);
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Failed to post comment: " + e.getMessage(),
+                            Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    private void showReplyDialog(Comment parentComment) {
+        Dialog dialog = new Dialog(this);
+        dialog.setContentView(R.layout.dialog_reply_comment);
+        dialog.getWindow().setLayout(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+
+        TextView originalCommentText = dialog.findViewById(R.id.originalCommentText);
+        EditText replyEditText = dialog.findViewById(R.id.replyEditText);
+        MaterialButton cancelButton = dialog.findViewById(R.id.cancelButton);
+        MaterialButton postReplyButton = dialog.findViewById(R.id.postReplyButton);
+
+        originalCommentText.setText("Replying to: " + parentComment.getCommentText());
+
+        cancelButton.setOnClickListener(v -> dialog.dismiss());
+
+        postReplyButton.setOnClickListener(v -> {
+            String replyText = replyEditText.getText().toString().trim();
+            if (TextUtils.isEmpty(replyText)) {
+                replyEditText.setError("Please write a reply");
+                return;
+            }
+            postReply(parentComment, replyText);
+            dialog.dismiss();
+        });
+
+        dialog.show();
+    }
+
+    private void postReply(Comment parentComment, String replyText) {
+        String userId = sessionManager.getUserId();
+        String userName = sessionManager.getUserName();
+        String userEmail = sessionManager.getUserEmail();
+
+        String replyId = firebaseHelper.getRecipeCommentsRef(recipeId).push().getKey();
+
+        if (replyId == null) {
+            Toast.makeText(this, "Failed to post reply", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Comment reply = new Comment(
+                replyId,
+                recipeId,
+                userId,
+                userName != null ? userName : userEmail,
+                userEmail,
+                replyText,
+                parentComment.getCommentId(),  // Set parent comment ID
+                System.currentTimeMillis()
+        );
+
+        firebaseHelper.getRecipeCommentsRef(recipeId)
+                .child(replyId)
+                .setValue(reply)
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(this, "Reply posted!", Toast.LENGTH_SHORT).show();
+
+                    // Increment reply count
+                    incrementReplyCount(parentComment.getCommentId());
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Failed to post reply: " + e.getMessage(),
+                            Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    private void incrementReplyCount(String parentCommentId) {
+        firebaseHelper.getRecipeCommentsRef(recipeId)
+                .child(parentCommentId)
+                .child("replyCount")
+                .runTransaction(new com.google.firebase.database.Transaction.Handler() {
+                    @NonNull
+                    @Override
+                    public com.google.firebase.database.Transaction.Result doTransaction(
+                            @NonNull com.google.firebase.database.MutableData mutableData) {
+                        Integer currentValue = mutableData.getValue(Integer.class);
+                        if (currentValue == null) {
+                            mutableData.setValue(1);
+                        } else {
+                            mutableData.setValue(currentValue + 1);
+                        }
+                        return com.google.firebase.database.Transaction.success(mutableData);
+                    }
+
+                    @Override
+                    public void onComplete(DatabaseError error, boolean committed, DataSnapshot snapshot) {
+                        if (error != null) {
+                            android.util.Log.e("RecipeDetail", "Reply count update failed: " + error.getMessage());
+                        }
+                    }
+                });
+    }
+
+    private void showRepliesDialog(Comment parentComment) {
+        Dialog dialog = new Dialog(this);
+        dialog.setContentView(R.layout.dialog_view_replies);
+        dialog.getWindow().setLayout(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+        );
+
+        TextView titleTextView = dialog.findViewById(R.id.titleTextView);
+        RecyclerView repliesRecyclerView = dialog.findViewById(R.id.repliesRecyclerView);
+        MaterialButton closeButton = dialog.findViewById(R.id.closeButton);
+
+        titleTextView.setText(parentComment.getReplyCount() +
+                (parentComment.getReplyCount() == 1 ? " Reply" : " Replies"));
+
+        List<Comment> replies = new ArrayList<>();
+        CommentAdapter repliesAdapter = new CommentAdapter(this, replies,
+                new CommentAdapter.OnCommentInteractionListener() {
+                    @Override
+                    public void onReplyClick(Comment comment) {
+                        // Can reply to the parent comment from here too
+                        dialog.dismiss();
+                        showReplyDialog(parentComment);
+                    }
+
+                    @Override
+                    public void onViewRepliesClick(Comment comment) {
+                        // Not needed for replies
+                    }
+                });
+
+        repliesRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        repliesRecyclerView.setAdapter(repliesAdapter);
+
+        // Load replies
+        firebaseHelper.getRecipeCommentsRef(recipeId)
+                .orderByChild("parentCommentId")
+                .equalTo(parentComment.getCommentId())
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        replies.clear();
+                        for (DataSnapshot replySnapshot : snapshot.getChildren()) {
+                            Comment reply = replySnapshot.getValue(Comment.class);
+                            if (reply != null) {
+                                replies.add(reply);
+                            }
+                        }
+                        repliesAdapter.updateComments(replies);
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Toast.makeText(RecipeDetailActivity.this,
+                                "Error loading replies: " + error.getMessage(),
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
+
+        closeButton.setOnClickListener(v -> dialog.dismiss());
+
+        dialog.show();
+    }
+
     private void loadRecipe() {
         binding.progressBar.setVisibility(View.VISIBLE);
 
@@ -80,9 +372,21 @@ public class RecipeDetailActivity extends AppCompatActivity {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                         if (snapshot.exists()) {
-                            currentRecipe = snapshot.getValue(Recipe.class);
-                            if (currentRecipe != null) {
-                                displayRecipe(currentRecipe);
+                            try {
+                                currentRecipe = snapshot.getValue(Recipe.class);
+                                if (currentRecipe != null) {
+                                    displayRecipe(currentRecipe);
+                                } else {
+                                    Toast.makeText(RecipeDetailActivity.this,
+                                            "Error loading recipe data", Toast.LENGTH_SHORT).show();
+                                    finish();
+                                }
+                            } catch (Exception e) {
+                                android.util.Log.e("RecipeDetail", "Error parsing recipe: " + e.getMessage());
+                                e.printStackTrace();
+                                Toast.makeText(RecipeDetailActivity.this,
+                                        "Error loading recipe: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                finish();
                             }
                         } else {
                             Toast.makeText(RecipeDetailActivity.this,
@@ -104,8 +408,8 @@ public class RecipeDetailActivity extends AppCompatActivity {
 
     private void displayRecipe(Recipe recipe) {
         // Basic Info
-        binding.recipeNameTextView.setText(recipe.getRecipeName());
-        binding.descriptionTextView.setText(recipe.getDescription());
+        binding.recipeNameTextView.setText(recipe.getRecipeName() != null ? recipe.getRecipeName() : "Unknown Recipe");
+        binding.descriptionTextView.setText(recipe.getDescription() != null ? recipe.getDescription() : "No description");
         binding.providerNameTextView.setText("By " + (recipe.getProviderName() != null ? recipe.getProviderName() : "Unknown"));
 
         // Stats
@@ -118,17 +422,13 @@ public class RecipeDetailActivity extends AppCompatActivity {
         binding.categoryTextView.setText(recipe.getCategory() != null ? recipe.getCategory() : "");
         binding.cuisineTextView.setText(recipe.getCuisine() != null ? recipe.getCuisine() : "");
 
-        // Rating - FIXED
+        // Rating
         binding.ratingBar.setRating((float) recipe.getAverageRating());
         binding.ratingCountTextView.setText("(" + recipe.getTotalRatings() + " ratings)");
 
-        // View count and cook count - with null checks
-        int viewCount = 0;
-        int cookCount = 0;
-
-        // These methods might not exist, so we'll use safe defaults
-        binding.viewCountTextView.setText(viewCount + " views");
-        binding.cookCountTextView.setText(cookCount + " times cooked");
+        // View count and cook count
+        binding.viewCountTextView.setText("0 views");
+        binding.cookCountTextView.setText("0 times cooked");
 
         // Nutrition
         binding.proteinTextView.setText(String.format("%.1fg", recipe.getProtein()));
@@ -139,32 +439,58 @@ public class RecipeDetailActivity extends AppCompatActivity {
         // Image
         if (recipe.getImageUrl() != null && !recipe.getImageUrl().isEmpty()) {
             ImageHelper.loadImage(this, recipe.getImageUrl(), binding.recipeImageView);
+        } else {
+            binding.recipeImageView.setImageResource(R.drawable.ic_image_placeholder);
         }
 
         // Ingredients
         displayIngredients(recipe);
 
         // Instructions
-        binding.instructionsTextView.setText(recipe.getInstructions());
+        binding.instructionsTextView.setText(recipe.getInstructions() != null ? recipe.getInstructions() : "No instructions provided");
 
-        // Tags - with null check
-        displayTags(null); // We'll handle tags separately since tagsList might not exist
+        // Tags
+        displayTags(null);
     }
 
     private void displayIngredients(Recipe recipe) {
         binding.ingredientsLayout.removeAllViews();
 
-        if (recipe.getIngredientDetails() != null && !recipe.getIngredientDetails().isEmpty()) {
-            for (Map.Entry<String, Recipe.IngredientDetail> entry :
-                    recipe.getIngredientDetails().entrySet()) {
-                Recipe.IngredientDetail detail = entry.getValue();
-                addIngredientView(detail.getName(), detail.getQuantity(), detail.getUnit());
+        try {
+            Map<String, Recipe.IngredientDetail> detailsMap = recipe.getIngredientDetailsMap();
+
+            if (detailsMap != null && !detailsMap.isEmpty()) {
+                for (Map.Entry<String, Recipe.IngredientDetail> entry : detailsMap.entrySet()) {
+                    Recipe.IngredientDetail detail = entry.getValue();
+                    if (detail != null) {
+                        addIngredientView(detail.getName(), detail.getQuantity(), detail.getUnit());
+                    }
+                }
+            } else {
+                Map<String, String> ingredientsMap = recipe.getIngredientsMap();
+
+                if (ingredientsMap != null && !ingredientsMap.isEmpty()) {
+                    for (Map.Entry<String, String> entry : ingredientsMap.entrySet()) {
+                        addIngredientView(entry.getValue(), "", "");
+                    }
+                } else {
+                    List<String> ingredientsList = recipe.getIngredientsList();
+
+                    if (ingredientsList != null && !ingredientsList.isEmpty()) {
+                        for (String ingredient : ingredientsList) {
+                            if (ingredient != null && !ingredient.isEmpty()) {
+                                addIngredientView(ingredient, "", "");
+                            }
+                        }
+                    } else {
+                        addIngredientView("No ingredients listed", "", "");
+                    }
+                }
             }
-        } else if (recipe.getIngredients() != null && !recipe.getIngredients().isEmpty()) {
-            // Fallback to simple ingredients map
-            for (Map.Entry<String, String> entry : recipe.getIngredients().entrySet()) {
-                addIngredientView(entry.getValue(), "", "");
-            }
+        } catch (Exception e) {
+            android.util.Log.e("RecipeDetail", "Error displaying ingredients: " + e.getMessage());
+            e.printStackTrace();
+            addIngredientView("Error loading ingredients", "", "");
         }
     }
 
@@ -200,6 +526,11 @@ public class RecipeDetailActivity extends AppCompatActivity {
     }
 
     private void showSaveToCookHistoryDialog() {
+        if (currentRecipe == null) {
+            Toast.makeText(this, "Recipe not loaded yet", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         Dialog dialog = new Dialog(this);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         dialog.setContentView(R.layout.dialog_save_cook_history);
@@ -219,7 +550,6 @@ public class RecipeDetailActivity extends AppCompatActivity {
         MaterialButton saveButton = dialog.findViewById(R.id.saveButton);
         MaterialButton cancelButton = dialog.findViewById(R.id.cancelButton);
 
-        // Pre-fill servings
         servingsEditText.setText(String.valueOf(currentRecipe.getServings()));
 
         saveButton.setOnClickListener(v -> {
@@ -257,20 +587,13 @@ public class RecipeDetailActivity extends AppCompatActivity {
                 notes
         );
 
-        // Save to cook history
         firebaseHelper.getUserCookHistoryRef(userId)
                 .child(historyId)
                 .setValue(cookHistory)
                 .addOnSuccessListener(aVoid -> {
                     Toast.makeText(this, "Saved to cook history!", Toast.LENGTH_SHORT).show();
-
-                    // Update recipe rating
                     updateRecipeRating(rating);
-
-                    // Increment cook count
                     incrementCookCount();
-
-                    // Update provider rating if rating provided
                     if (rating > 0) {
                         updateProviderRating(rating);
                     }
@@ -285,15 +608,12 @@ public class RecipeDetailActivity extends AppCompatActivity {
         if (newRating == 0) return;
 
         String userId = sessionManager.getUserId();
-        Map<String, Object> updates = new HashMap<>();
 
-        // Add user rating to the map
         firebaseHelper.getRecipeRef(recipeId)
                 .child("userRatings")
                 .child(userId)
                 .setValue((double) newRating);
 
-        // Recalculate average
         firebaseHelper.getRecipeRef(recipeId)
                 .child("userRatings")
                 .addListenerForSingleValueEvent(new ValueEventListener() {
@@ -319,7 +639,9 @@ public class RecipeDetailActivity extends AppCompatActivity {
                     }
 
                     @Override
-                    public void onCancelled(@NonNull DatabaseError error) {}
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        android.util.Log.e("RecipeDetail", "Rating update cancelled: " + error.getMessage());
+                    }
                 });
     }
 
@@ -341,7 +663,11 @@ public class RecipeDetailActivity extends AppCompatActivity {
                     }
 
                     @Override
-                    public void onComplete(DatabaseError error, boolean committed, DataSnapshot snapshot) {}
+                    public void onComplete(DatabaseError error, boolean committed, DataSnapshot snapshot) {
+                        if (error != null) {
+                            android.util.Log.e("RecipeDetail", "Cook count update failed: " + error.getMessage());
+                        }
+                    }
                 });
     }
 
@@ -363,7 +689,11 @@ public class RecipeDetailActivity extends AppCompatActivity {
                     }
 
                     @Override
-                    public void onComplete(DatabaseError error, boolean committed, DataSnapshot snapshot) {}
+                    public void onComplete(DatabaseError error, boolean committed, DataSnapshot snapshot) {
+                        if (error != null) {
+                            android.util.Log.e("RecipeDetail", "View count update failed: " + error.getMessage());
+                        }
+                    }
                 });
     }
 
@@ -385,17 +715,25 @@ public class RecipeDetailActivity extends AppCompatActivity {
                             Map<String, Object> updates = new HashMap<>();
                             updates.put("totalRating", currentTotal + rating);
                             updates.put("ratingCount", currentCount + 1);
+                            updates.put("averageRating", (currentTotal + rating) / (currentCount + 1));
 
                             firebaseHelper.getUserRef(providerId).updateChildren(updates);
                         }
                     }
 
                     @Override
-                    public void onCancelled(@NonNull DatabaseError error) {}
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        android.util.Log.e("RecipeDetail", "Provider rating update cancelled: " + error.getMessage());
+                    }
                 });
     }
 
     private void shareRecipe() {
+        if (currentRecipe == null) {
+            Toast.makeText(this, "Recipe not loaded yet", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         int totalTime = currentRecipe.getPreparationTime() + currentRecipe.getCookingTime();
 
         String shareText = "Check out this recipe: " + currentRecipe.getRecipeName() +
