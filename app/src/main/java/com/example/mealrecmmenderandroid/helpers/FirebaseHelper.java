@@ -89,6 +89,15 @@ public class FirebaseHelper {
         return database.getReference("ingredients");
     }
 
+    // Comments References - NEW
+    public DatabaseReference getRecipeCommentsRef(String recipeId) {
+        return database.getReference("recipe_comments").child(recipeId);
+    }
+
+    public DatabaseReference getAllCommentsRef() {
+        return database.getReference("recipe_comments");
+    }
+
     // Storage References
     public StorageReference getRecipeImagesRef() {
         return storage.getReference("recipe_images");
