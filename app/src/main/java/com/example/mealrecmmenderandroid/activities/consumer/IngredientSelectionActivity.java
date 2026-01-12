@@ -2,35 +2,21 @@ package com.example.mealrecmmenderandroid.activities.consumer;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
-import android.view.View;
+import android.text.TextUtils;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.GridLayoutManager;
 
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.ValueEventListener;
-import com.example.mealrecmmenderandroid.adapters.IngredientAdapter;
+import com.google.android.material.chip.Chip;
 import com.example.mealrecmmenderandroid.databinding.ActivityIngredientSelectionBinding;
-import com.example.mealrecmmenderandroid.models.Ingredient;
-import com.example.mealrecmmenderandroid.helpers.FirebaseHelper;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public class IngredientSelectionActivity extends AppCompatActivity {
 
     private ActivityIngredientSelectionBinding binding;
-    private FirebaseHelper firebaseHelper;
-    private IngredientAdapter adapter;
-    private List<Ingredient> allIngredients;
-    private List<Ingredient> filteredIngredients;
     private Set<String> selectedIngredients;
 
     @Override
@@ -39,124 +25,118 @@ public class IngredientSelectionActivity extends AppCompatActivity {
         binding = ActivityIngredientSelectionBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        firebaseHelper = FirebaseHelper.getInstance();
-        allIngredients = new ArrayList<>();
-        filteredIngredients = new ArrayList<>();
-
-        // Get previously selected ingredients
-        ArrayList<String> previouslySelected =
-                getIntent().getStringArrayListExtra("selected_ingredients");
-        selectedIngredients = previouslySelected != null ?
-                new HashSet<>(previouslySelected) : new HashSet<>();
+        selectedIngredients = new HashSet<>();
 
         setupToolbar();
-        setupRecyclerView();
+        loadPreviousSelections();
         setupListeners();
-        loadIngredients();
+        updateSelectedCount();
     }
 
     private void setupToolbar() {
         setSupportActionBar(binding.toolbar);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle("Select Ingredients");
+            getSupportActionBar().setTitle("Add Your Ingredients");
         }
         binding.toolbar.setNavigationOnClickListener(v -> onBackPressed());
     }
 
-    private void setupRecyclerView() {
-        adapter = new IngredientAdapter(this, filteredIngredients,
-                selectedIngredients, (ingredient, isSelected) -> {
-            updateSelectedCount();
-        });
-        binding.ingredientsRecyclerView.setLayoutManager(new GridLayoutManager(this, 2));
-        binding.ingredientsRecyclerView.setAdapter(adapter);
+    private void loadPreviousSelections() {
+        ArrayList<String> previousSelections = getIntent()
+                .getStringArrayListExtra("selected_ingredients");
+        if (previousSelections != null) {
+            for (String ingredient : previousSelections) {
+                selectedIngredients.add(ingredient.toLowerCase());
+                addIngredientChip(ingredient);
+            }
+        }
     }
 
     private void setupListeners() {
-        binding.searchEditText.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+        // Clear button acts as ADD button
+        binding.clearButton.setOnClickListener(v -> addIngredient());
 
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                filterIngredients(s.toString());
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {}
+        // Enter key on keyboard adds ingredient
+        binding.searchEditText.setOnEditorActionListener((v, actionId, event) -> {
+            addIngredient();
+            return true;
         });
 
-        binding.doneButton.setOnClickListener(v -> finishSelection());
-
-        binding.clearButton.setOnClickListener(v -> {
-            selectedIngredients.clear();
-            adapter.notifyDataSetChanged();
-            updateSelectedCount();
-        });
+        // Done button
+        binding.doneButton.setOnClickListener(v -> searchRecipes());
     }
 
-    private void loadIngredients() {
-        binding.progressBar.setVisibility(View.VISIBLE);
+    private void addIngredient() {
+        String ingredient = binding.searchEditText.getText().toString().trim();
 
-        firebaseHelper.getIngredientsRef()
-                .orderByChild("name")
-                .addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        allIngredients.clear();
-                        for (DataSnapshot ingredientSnapshot : snapshot.getChildren()) {
-                            Ingredient ingredient = ingredientSnapshot.getValue(Ingredient.class);
-                            if (ingredient != null) {
-                                allIngredients.add(ingredient);
-                            }
-                        }
-                        filteredIngredients.clear();
-                        filteredIngredients.addAll(allIngredients);
-                        adapter.updateIngredients(filteredIngredients);
-                        binding.progressBar.setVisibility(View.GONE);
-                        updateSelectedCount();
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-                        binding.progressBar.setVisibility(View.GONE);
-                        Toast.makeText(IngredientSelectionActivity.this,
-                                "Error loading ingredients: " + error.getMessage(),
-                                Toast.LENGTH_SHORT).show();
-                    }
-                });
-    }
-
-    private void filterIngredients(String query) {
-        filteredIngredients.clear();
-
-        if (query.isEmpty()) {
-            filteredIngredients.addAll(allIngredients);
-        } else {
-            String lowerQuery = query.toLowerCase();
-            for (Ingredient ingredient : allIngredients) {
-                if (ingredient.getName().toLowerCase().contains(lowerQuery) ||
-                        ingredient.getCategory().toLowerCase().contains(lowerQuery)) {
-                    filteredIngredients.add(ingredient);
-                }
-            }
+        if (TextUtils.isEmpty(ingredient)) {
+            binding.searchEditText.setError("Enter an ingredient");
+            return;
         }
 
-        adapter.updateIngredients(filteredIngredients);
+        // Check if already added
+        String lowerIngredient = ingredient.toLowerCase();
+        if (selectedIngredients.contains(lowerIngredient)) {
+            Toast.makeText(this, "Already added!", Toast.LENGTH_SHORT).show();
+            binding.searchEditText.setText("");
+            return;
+        }
+
+        // Add ingredient
+        selectedIngredients.add(lowerIngredient);
+        addIngredientChip(ingredient);
+
+        // Clear input
+        binding.searchEditText.setText("");
+        binding.searchEditText.requestFocus();
+
+        updateSelectedCount();
     }
 
-    private void updateSelectedCount() {
-        int count = selectedIngredients.size();
-        binding.selectedCountTextView.setText(count + " selected");
-        binding.doneButton.setEnabled(count > 0);
+    private void addIngredientChip(String ingredient) {
+        Chip chip = new Chip(this);
+        chip.setText(ingredient);
+        chip.setCloseIconVisible(true);
+        chip.setCheckable(false);
+
+        chip.setOnCloseIconClickListener(v -> {
+            binding.ingredientsRecyclerView.removeView(chip);
+            selectedIngredients.remove(ingredient.toLowerCase());
+            updateSelectedCount();
+        });
+
+        // Use RecyclerView as a container for chips
+        binding.ingredientsRecyclerView.addView(chip);
     }
 
-    private void finishSelection() {
+    private void searchRecipes() {
+        if (selectedIngredients.isEmpty()) {
+            Toast.makeText(this, "Please add at least one ingredient",
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         Intent resultIntent = new Intent();
         resultIntent.putStringArrayListExtra("selected_ingredients",
                 new ArrayList<>(selectedIngredients));
         setResult(RESULT_OK, resultIntent);
         finish();
+    }
+
+    private void updateSelectedCount() {
+        int count = selectedIngredients.size();
+        binding.selectedCountTextView.setText(count + " ingredient" + (count != 1 ? "s" : "") + " added");
+        binding.doneButton.setEnabled(count > 0);
+        binding.doneButton.setText(count > 0 ? "SEARCH RECIPES (" + count + ")" : "ADD INGREDIENTS");
+    }
+
+    @Override
+    public void onBackPressed() {
+        Intent resultIntent = new Intent();
+        resultIntent.putStringArrayListExtra("selected_ingredients",
+                new ArrayList<>(selectedIngredients));
+        setResult(selectedIngredients.isEmpty() ? RESULT_CANCELED : RESULT_OK, resultIntent);
+        super.onBackPressed();
     }
 }
