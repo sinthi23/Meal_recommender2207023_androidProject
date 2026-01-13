@@ -2,174 +2,203 @@ package com.example.mealrecmmenderandroid.activities.consumer;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.widget.Button;
-import android.widget.TextView;
+import android.view.View;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
+import com.example.mealrecmmenderandroid.activities.LoginActivity;
+import com.example.mealrecmmenderandroid.databinding.ActivityProfileBinding;
+import com.example.mealrecmmenderandroid.helpers.FirebaseHelper;
+import com.example.mealrecmmenderandroid.helpers.SessionManager;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.example.mealrecmmenderandroid.R;
-import com.example.mealrecmmenderandroid.activities.LoginActivity;
-import com.example.mealrecmmenderandroid.helpers.SessionManager;
 
 public class ProfileActivity extends AppCompatActivity {
 
-    private FirebaseAuth mAuth;
-    private DatabaseReference usersRef;
+    private ActivityProfileBinding binding;
     private SessionManager sessionManager;
-    private TextView tvUserName;
-    private TextView tvUserEmail;
-    private TextView tvUserType;
-    private Button btnLogout;
+    private FirebaseHelper firebaseHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_profile);
+        binding = ActivityProfileBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
-        // Initialize Firebase
-        mAuth = FirebaseAuth.getInstance();
-        usersRef = FirebaseDatabase.getInstance()
-                .getInstance("https://meal-recommender-android-9801b-default-rtdb.firebaseio.com")
-                .getReference("users");
         sessionManager = new SessionManager(this);
+        firebaseHelper = FirebaseHelper.getInstance();
 
-        // Setup toolbar
+        setupToolbar();
+        loadUserProfile();
+        setupListeners();
+    }
+
+    private void setupToolbar() {
+        setSupportActionBar(binding.toolbar);
         if (getSupportActionBar() != null) {
-            getSupportActionBar().setTitle("Profile");
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setTitle("Profile");
+        }
+        binding.toolbar.setNavigationOnClickListener(v -> finish());
+    }
+
+    private void loadUserProfile() {
+        // Show loading
+        binding.progressBar.setVisibility(View.VISIBLE);
+        binding.profileCard.setVisibility(View.GONE);
+
+        // First, load from session (fast)
+        String sessionUsername = sessionManager.getUserName();
+        String sessionEmail = sessionManager.getUserEmail();
+        String sessionAccountType = sessionManager.getAccountType();
+
+        if (sessionUsername != null && !sessionUsername.isEmpty()) {
+            binding.tvUserName.setText(sessionUsername);
+        }
+        if (sessionEmail != null && !sessionEmail.isEmpty()) {
+            binding.tvUserEmail.setText(sessionEmail);
+        }
+        if (sessionAccountType != null && !sessionAccountType.isEmpty()) {
+            binding.tvUserType.setText(capitalize(sessionAccountType));
         }
 
-        // Initialize views
-        initViews();
-
-        // Load user data
-        loadUserData();
-
-        // Setup logout button
-        setupLogoutButton();
-    }
-
-    private void initViews() {
-        tvUserName = findViewById(R.id.tv_user_name);
-        tvUserEmail = findViewById(R.id.tv_user_email);
-        tvUserType = findViewById(R.id.tv_user_type);
-        btnLogout = findViewById(R.id.btn_logout);
-    }
-
-    private void loadUserData() {
-        // Display from session first (fast)
-        String userName = sessionManager.getUserName();
-        String email = sessionManager.getUserEmail();
-        String accountType = sessionManager.getAccountType();
-
-        tvUserName.setText(userName != null ? userName : "User");
-        tvUserEmail.setText(email != null ? email : "No email");
-        tvUserType.setText(accountType != null ? accountType : "Consumer");
-
-        // Then load from Firebase for accuracy
-        FirebaseUser currentUser = mAuth.getCurrentUser();
-        if (currentUser != null) {
-            usersRef.child(currentUser.getUid())
+        // Then, load from Firebase (accurate)
+        String userId = sessionManager.getUserId();
+        if (userId != null) {
+            firebaseHelper.getUserRef(userId)
                     .addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
                         public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            binding.progressBar.setVisibility(View.GONE);
+                            binding.profileCard.setVisibility(View.VISIBLE);
+
                             if (snapshot.exists()) {
-                                // Try to get username, fallback to fullName
+                                // Get all possible name fields
                                 String username = snapshot.child("username").getValue(String.class);
                                 String fullName = snapshot.child("fullName").getValue(String.class);
+                                String email = snapshot.child("email").getValue(String.class);
                                 String userType = snapshot.child("userType").getValue(String.class);
                                 String accountType = snapshot.child("accountType").getValue(String.class);
+                                String phone = snapshot.child("phone").getValue(String.class);
 
-                                // Determine display name
+                                // Priority: username → fullName → email prefix
                                 String displayName = username;
                                 if (displayName == null || displayName.isEmpty()) {
                                     displayName = fullName;
                                 }
-                                if (displayName == null || displayName.isEmpty()) {
-                                    displayName = currentUser.getEmail().split("@")[0];
+                                if (displayName == null || displayName.isEmpty() && email != null) {
+                                    displayName = email.split("@")[0];
                                 }
 
-                                // Determine account type
+                                // Display username
+                                if (displayName != null && !displayName.isEmpty()) {
+                                    binding.tvUserName.setText(displayName);
+
+                                    // Update session with username if it was missing
+                                    if (username == null || username.isEmpty()) {
+                                        sessionManager.updateUsername(displayName);
+                                        // Also update Firebase
+                                        firebaseHelper.getUserRef(userId)
+                                                .child("username")
+                                                .setValue(displayName);
+                                    }
+                                }
+
+                                // Display email
+                                if (email != null && !email.isEmpty()) {
+                                    binding.tvUserEmail.setText(email);
+                                }
+
+                                // Display account type
                                 String finalAccountType = accountType;
                                 if (finalAccountType == null || finalAccountType.isEmpty()) {
                                     finalAccountType = userType;
                                 }
-                                if (finalAccountType == null || finalAccountType.isEmpty()) {
-                                    finalAccountType = "Consumer";
+                                if (finalAccountType != null && !finalAccountType.isEmpty()) {
+                                    binding.tvUserType.setText(capitalize(finalAccountType));
                                 }
 
-                                // Update UI
-                                tvUserName.setText(displayName);
-                                tvUserEmail.setText(currentUser.getEmail());
-                                tvUserType.setText(finalAccountType);
-
-                                // Update session if needed
-                                if (!displayName.equals(userName)) {
-                                    sessionManager.createLoginSession(
-                                            currentUser.getUid(),
-                                            finalAccountType,
-                                            displayName,
-                                            currentUser.getEmail()
-                                    );
+                                // Display phone (if available)
+                                if (phone != null && !phone.isEmpty() && binding.tvUserPhone != null) {
+                                    binding.tvUserPhone.setText(phone);
+                                    if (binding.phoneContainer != null) {
+                                        binding.phoneContainer.setVisibility(View.VISIBLE);
+                                    }
                                 }
+
+                                // Display user stats (if they exist)
+                                loadUserStats(snapshot);
                             }
                         }
 
                         @Override
                         public void onCancelled(@NonNull DatabaseError error) {
+                            binding.progressBar.setVisibility(View.GONE);
+                            binding.profileCard.setVisibility(View.VISIBLE);
                             Toast.makeText(ProfileActivity.this,
                                     "Error loading profile: " + error.getMessage(),
                                     Toast.LENGTH_SHORT).show();
                         }
                     });
+        } else {
+            binding.progressBar.setVisibility(View.GONE);
+            binding.profileCard.setVisibility(View.VISIBLE);
         }
     }
 
-    private void setupLogoutButton() {
-        btnLogout.setOnClickListener(v -> showLogoutDialog());
-    }
+    private void loadUserStats(DataSnapshot snapshot) {
+        // For providers: show recipe stats
+        if (sessionManager.isProvider() && binding.statsContainer != null) {
+            Integer totalRecipes = snapshot.child("totalRecipesProvided").getValue(Integer.class);
+            Double averageRating = snapshot.child("averageRating").getValue(Double.class);
+            Integer ratingCount = snapshot.child("ratingCount").getValue(Integer.class);
 
-    private void showLogoutDialog() {
-        new AlertDialog.Builder(this)
-                .setTitle("Logout")
-                .setMessage("Are you sure you want to logout?")
-                .setPositiveButton("Yes", (dialog, which) -> logoutUser())
-                .setNegativeButton("No", null)
-                .show();
-    }
+            if (totalRecipes != null && totalRecipes > 0) {
+                binding.statsContainer.setVisibility(View.VISIBLE);
+                if (binding.tvTotalRecipes != null) {
+                    binding.tvTotalRecipes.setText(String.valueOf(totalRecipes));
+                }
 
-    private void logoutUser() {
-        // Sign out from Firebase Auth
-        if (mAuth != null) {
-            mAuth.signOut();
+                if (binding.tvAverageRating != null) {
+                    if (averageRating != null && ratingCount != null && ratingCount > 0) {
+                        binding.tvAverageRating.setText(String.format("%.1f ★ (%d)", averageRating, ratingCount));
+                    } else {
+                        binding.tvAverageRating.setText("No ratings yet");
+                    }
+                }
+            } else {
+                binding.statsContainer.setVisibility(View.GONE);
+            }
         }
+    }
+
+    private void setupListeners() {
+        binding.logoutButton.setOnClickListener(v -> logout());
+    }
+
+    private void logout() {
+        // Sign out from Firebase
+        firebaseHelper.getAuth().signOut();
 
         // Clear session
         sessionManager.logoutUser();
 
-        // Show success message
-        Toast.makeText(this, "Logged out successfully", Toast.LENGTH_SHORT).show();
-
-        // Redirect to login and clear back stack
+        // Navigate to login
         Intent intent = new Intent(ProfileActivity.this, LoginActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
+
+        Toast.makeText(this, "Logged out successfully", Toast.LENGTH_SHORT).show();
     }
 
-    @Override
-    public boolean onSupportNavigateUp() {
-        onBackPressed();
-        return true;
+    private String capitalize(String text) {
+        if (text == null || text.isEmpty()) {
+            return text;
+        }
+        return text.substring(0, 1).toUpperCase() + text.substring(1).toLowerCase();
     }
 }

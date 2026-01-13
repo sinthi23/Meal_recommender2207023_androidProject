@@ -9,10 +9,12 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.mealrecmmenderandroid.databinding.ItemCookHistoryBinding;
 import com.example.mealrecmmenderandroid.models.CookHistory;
-import com.example.mealrecmmenderandroid.utils.DateHelper;
 import com.example.mealrecmmenderandroid.utils.ImageHelper;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class CookHistoryAdapter extends RecyclerView.Adapter<CookHistoryAdapter.CookHistoryViewHolder> {
 
@@ -65,21 +67,34 @@ public class CookHistoryAdapter extends RecyclerView.Adapter<CookHistoryAdapter.
         }
 
         public void bind(CookHistory history) {
-            binding.recipeNameTextView.setText(history.getRecipeName());
+            // Recipe name
+            binding.recipeNameTextView.setText(history.getRecipeName() != null ?
+                    history.getRecipeName() : "Unknown Recipe");
+
+            // Calories
             binding.caloriesTextView.setText(history.getCalories() + " cal");
-            binding.cookedDateTextView.setText(DateHelper.formatDate(history.getCookedDate()));
-            binding.ratingBar.setRating(history.getUserRating());
+
+            // Date - Format timestamp
+            binding.cookedDateTextView.setText(formatDate(history.getTimestamp()));
+
+            // Rating
+            binding.ratingBar.setRating(history.getRating());
 
             // Notes - check if exists
             if (history.getNotes() != null && !history.getNotes().isEmpty()) {
                 binding.notesTextView.setText(history.getNotes());
+                binding.notesTextView.setVisibility(android.view.View.VISIBLE);
             } else {
-                binding.notesTextView.setText("No notes");
+                binding.notesTextView.setVisibility(android.view.View.GONE);
             }
 
-            // Load image
-            ImageHelper.loadImage(context, history.getRecipeId(),
-                    binding.recipeImageView);
+            // Load recipe image if available - FIXED
+            if (history.getRecipeId() != null && !history.getRecipeId().isEmpty()) {
+                loadRecipeImageFromFirebase(history.getRecipeId());
+            } else {
+                binding.recipeImageView.setImageResource(
+                        com.example.mealrecmmenderandroid.R.drawable.ic_image_placeholder);
+            }
 
             // Click listeners
             itemView.setOnClickListener(v -> {
@@ -93,6 +108,39 @@ public class CookHistoryAdapter extends RecyclerView.Adapter<CookHistoryAdapter.
                     listener.onViewRecipeClick(history);
                 }
             });
+        }
+
+        private void loadRecipeImageFromFirebase(String recipeId) {
+            com.example.mealrecmmenderandroid.helpers.FirebaseHelper.getInstance()
+                    .getRecipeRef(recipeId)
+                    .child("imageUrl")
+                    .addListenerForSingleValueEvent(new com.google.firebase.database.ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull com.google.firebase.database.DataSnapshot snapshot) {
+                            String imageUrl = snapshot.getValue(String.class);
+                            if (imageUrl != null && !imageUrl.isEmpty()) {
+                                ImageHelper.loadImage(context, imageUrl, binding.recipeImageView);
+                            } else {
+                                binding.recipeImageView.setImageResource(
+                                        com.example.mealrecmmenderandroid.R.drawable.ic_image_placeholder);
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull com.google.firebase.database.DatabaseError error) {
+                            binding.recipeImageView.setImageResource(
+                                    com.example.mealrecmmenderandroid.R.drawable.ic_image_placeholder);
+                        }
+                    });
+        }
+
+        private String formatDate(long timestamp) {
+            try {
+                SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy 'at' hh:mm a", Locale.getDefault());
+                return sdf.format(new Date(timestamp));
+            } catch (Exception e) {
+                return "Unknown date";
+            }
         }
     }
 }

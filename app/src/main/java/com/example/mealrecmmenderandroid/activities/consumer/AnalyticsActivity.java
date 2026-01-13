@@ -1,30 +1,49 @@
 package com.example.mealrecmmenderandroid.activities.consumer;
 
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Toast;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.mealrecmmenderandroid.R;
+import com.example.mealrecmmenderandroid.databinding.ActivityAnalyticsBinding;
+import com.example.mealrecmmenderandroid.helpers.FirebaseHelper;
+import com.example.mealrecmmenderandroid.helpers.SessionManager;
+import com.example.mealrecmmenderandroid.models.CookHistory;
+import com.github.mikephil.charting.animation.Easing;
+import com.github.mikephil.charting.charts.BarChart;
+import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.Description;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
+import com.github.mikephil.charting.data.BarData;
+import com.github.mikephil.charting.data.BarDataSet;
+import com.github.mikephil.charting.data.BarEntry;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
-import com.example.mealrecmmenderandroid.databinding.ActivityAnalyticsBinding;
-import com.example.mealrecmmenderandroid.models.CookHistory;
-import com.example.mealrecmmenderandroid.helpers.FirebaseHelper;
-import com.example.mealrecmmenderandroid.helpers.SessionManager;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 public class AnalyticsActivity extends AppCompatActivity {
 
     private ActivityAnalyticsBinding binding;
     private FirebaseHelper firebaseHelper;
     private SessionManager sessionManager;
-    private List<CookHistory> allHistory;
+    private List<CookHistory> cookHistoryList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,10 +53,10 @@ public class AnalyticsActivity extends AppCompatActivity {
 
         firebaseHelper = FirebaseHelper.getInstance();
         sessionManager = new SessionManager(this);
-        allHistory = new ArrayList<>();
+        cookHistoryList = new ArrayList<>();
 
         setupToolbar();
-        loadAnalytics();
+        loadCookingData();
     }
 
     private void setupToolbar() {
@@ -46,84 +65,259 @@ public class AnalyticsActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setTitle("Analytics");
         }
-        binding.toolbar.setNavigationOnClickListener(v -> onBackPressed());
+        binding.toolbar.setNavigationOnClickListener(v -> finish());
     }
 
-    private void loadAnalytics() {
+    private void loadCookingData() {
         binding.progressBar.setVisibility(View.VISIBLE);
 
         String userId = sessionManager.getUserId();
 
         firebaseHelper.getUserCookHistoryRef(userId)
-                .addValueEventListener(new ValueEventListener() {
+                .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        allHistory.clear();
-
+                        cookHistoryList.clear();
                         for (DataSnapshot historySnapshot : snapshot.getChildren()) {
                             CookHistory history = historySnapshot.getValue(CookHistory.class);
                             if (history != null) {
-                                allHistory.add(history);
+                                cookHistoryList.add(history);
                             }
                         }
 
-                        calculateAndDisplayAnalytics();
+                        updateStatistics();
+                        setupMostCookedMealsChart();
+                        setupCaloriesTrendChart();
+
                         binding.progressBar.setVisibility(View.GONE);
                     }
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
                         binding.progressBar.setVisibility(View.GONE);
-                        Toast.makeText(AnalyticsActivity.this,
-                                "Error loading analytics: " + error.getMessage(),
-                                Toast.LENGTH_SHORT).show();
                     }
                 });
     }
 
-    private void calculateAndDisplayAnalytics() {
-        if (allHistory.isEmpty()) {
-            binding.emptyStateLayout.setVisibility(View.VISIBLE);
-            binding.chartsLayout.setVisibility(View.GONE);
+    private void updateStatistics() {
+        // Calculate this week's meals
+        int thisWeekCount = 0;
+        int thisMonthCount = 0;
+
+        Calendar calendar = Calendar.getInstance();
+        long currentTime = System.currentTimeMillis();
+
+        // Start of this week (Sunday)
+        calendar.setTimeInMillis(currentTime);
+        calendar.set(Calendar.DAY_OF_WEEK, Calendar.SUNDAY);
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        long weekStart = calendar.getTimeInMillis();
+
+        // Start of this month
+        calendar.setTimeInMillis(currentTime);
+        calendar.set(Calendar.DAY_OF_MONTH, 1);
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        long monthStart = calendar.getTimeInMillis();
+
+        for (CookHistory history : cookHistoryList) {
+            long timestamp = history.getTimestamp();
+            if (timestamp >= weekStart) {
+                thisWeekCount++;
+            }
+            if (timestamp >= monthStart) {
+                thisMonthCount++;
+            }
+        }
+
+        binding.thisWeekCountTextView.setText(String.valueOf(thisWeekCount));
+        binding.thisMonthCountTextView.setText(String.valueOf(thisMonthCount));
+    }
+
+    private void setupMostCookedMealsChart() {
+        // Count how many times each meal was cooked
+        Map<String, Integer> mealCounts = new HashMap<>();
+
+        for (CookHistory history : cookHistoryList) {
+            String recipeName = history.getRecipeName();
+            if (recipeName != null) {
+                mealCounts.put(recipeName, mealCounts.getOrDefault(recipeName, 0) + 1);
+            }
+        }
+
+        // Get top 5 most cooked meals
+        List<Map.Entry<String, Integer>> sortedMeals = new ArrayList<>(mealCounts.entrySet());
+        sortedMeals.sort((a, b) -> b.getValue().compareTo(a.getValue()));
+
+        if (sortedMeals.isEmpty()) {
+            binding.mostCookedChart.setVisibility(View.GONE);
+            binding.noMostCookedDataTextView.setVisibility(View.VISIBLE);
             return;
         }
 
-        binding.emptyStateLayout.setVisibility(View.GONE);
-        binding.chartsLayout.setVisibility(View.VISIBLE);
+        binding.mostCookedChart.setVisibility(View.VISIBLE);
+        binding.noMostCookedDataTextView.setVisibility(View.GONE);
 
-        // Calculate statistics
-        int totalMeals = allHistory.size();
-        int totalCalories = 0;
-        int weeklyCalories = 0;
-        int monthlyCalories = 0;
+        // Prepare data for chart
+        ArrayList<BarEntry> entries = new ArrayList<>();
+        ArrayList<String> labels = new ArrayList<>();
 
-        Calendar cal = Calendar.getInstance();
-        int currentWeek = cal.get(Calendar.WEEK_OF_YEAR);
-        int currentMonth = cal.get(Calendar.MONTH);
-        int currentYear = cal.get(Calendar.YEAR);
+        int limit = Math.min(5, sortedMeals.size());
+        for (int i = 0; i < limit; i++) {
+            Map.Entry<String, Integer> entry = sortedMeals.get(i);
+            entries.add(new BarEntry(i, entry.getValue()));
 
-        for (CookHistory history : allHistory) {
-            totalCalories += history.getCalories();
-
-            cal.setTimeInMillis(history.getCookedDate());
-
-            // This week
-            if (cal.get(Calendar.WEEK_OF_YEAR) == currentWeek &&
-                    cal.get(Calendar.YEAR) == currentYear) {
-                weeklyCalories += history.getCalories();
+            // Truncate long recipe names
+            String name = entry.getKey();
+            if (name.length() > 15) {
+                name = name.substring(0, 12) + "...";
             }
+            labels.add(name);
+        }
 
-            // This month
-            if (cal.get(Calendar.MONTH) == currentMonth &&
-                    cal.get(Calendar.YEAR) == currentYear) {
-                monthlyCalories += history.getCalories();
+        // Create dataset
+        BarDataSet dataSet = new BarDataSet(entries, "Times Cooked");
+        dataSet.setColors(new int[]{
+                Color.parseColor("#4CAF50"),
+                Color.parseColor("#66BB6A"),
+                Color.parseColor("#81C784"),
+                Color.parseColor("#A5D6A7"),
+                Color.parseColor("#C8E6C9")
+        });
+        dataSet.setValueTextColor(Color.BLACK);
+        dataSet.setValueTextSize(12f);
+
+        BarData barData = new BarData(dataSet);
+        barData.setBarWidth(0.8f);
+
+        // Configure chart
+        binding.mostCookedChart.setData(barData);
+        binding.mostCookedChart.setFitBars(true);
+        binding.mostCookedChart.animateY(1000, Easing.EaseInOutQuad);
+
+        Description description = new Description();
+        description.setText("");
+        binding.mostCookedChart.setDescription(description);
+
+        // X-axis
+        XAxis xAxis = binding.mostCookedChart.getXAxis();
+        xAxis.setValueFormatter(new IndexAxisValueFormatter(labels));
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        xAxis.setGranularity(1f);
+        xAxis.setGranularityEnabled(true);
+        xAxis.setDrawGridLines(false);
+
+        // Y-axis
+        YAxis leftAxis = binding.mostCookedChart.getAxisLeft();
+        leftAxis.setAxisMinimum(0f);
+        leftAxis.setGranularity(1f);
+
+        binding.mostCookedChart.getAxisRight().setEnabled(false);
+        binding.mostCookedChart.getLegend().setEnabled(false);
+
+        binding.mostCookedChart.invalidate();
+    }
+
+    private void setupCaloriesTrendChart() {
+        // Get last 7 days of calorie data
+        Calendar calendar = Calendar.getInstance();
+        long currentTime = System.currentTimeMillis();
+
+        // Start of 7 days ago
+        calendar.setTimeInMillis(currentTime);
+        calendar.add(Calendar.DAY_OF_YEAR, -6);
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        long sevenDaysAgo = calendar.getTimeInMillis();
+
+        // Group calories by day
+        Map<String, Integer> dailyCalories = new HashMap<>();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd", Locale.getDefault());
+
+        // Initialize last 7 days with 0 calories
+        for (int i = 0; i < 7; i++) {
+            calendar.setTimeInMillis(currentTime);
+            calendar.add(Calendar.DAY_OF_YEAR, -6 + i);
+            String dateKey = dateFormat.format(calendar.getTime());
+            dailyCalories.put(dateKey, 0);
+        }
+
+        // Add actual calorie data
+        for (CookHistory history : cookHistoryList) {
+            long timestamp = history.getTimestamp();
+            if (timestamp >= sevenDaysAgo) {
+                calendar.setTimeInMillis(timestamp);
+                String dateKey = dateFormat.format(calendar.getTime());
+                int currentCalories = dailyCalories.getOrDefault(dateKey, 0);
+                dailyCalories.put(dateKey, currentCalories + history.getCalories());
             }
         }
 
-        // Update summary cards
-        binding.totalMealsTextView.setText(String.valueOf(totalMeals));
-        binding.totalCaloriesTextView.setText(String.valueOf(totalCalories));
-        binding.weeklyCaloriesTextView.setText(String.valueOf(weeklyCalories));
-        binding.monthlyCaloriesTextView.setText(String.valueOf(monthlyCalories));
+        if (dailyCalories.isEmpty() || dailyCalories.values().stream().allMatch(v -> v == 0)) {
+            binding.caloriesTrendChart.setVisibility(View.GONE);
+            binding.noCaloriesDataTextView.setVisibility(View.VISIBLE);
+            return;
+        }
+
+        binding.caloriesTrendChart.setVisibility(View.VISIBLE);
+        binding.noCaloriesDataTextView.setVisibility(View.GONE);
+
+        // Prepare data for chart
+        ArrayList<Entry> entries = new ArrayList<>();
+        ArrayList<String> labels = new ArrayList<>();
+
+        int index = 0;
+        for (int i = 0; i < 7; i++) {
+            calendar.setTimeInMillis(currentTime);
+            calendar.add(Calendar.DAY_OF_YEAR, -6 + i);
+            String dateKey = dateFormat.format(calendar.getTime());
+            int calories = dailyCalories.getOrDefault(dateKey, 0);
+
+            entries.add(new Entry(index, calories));
+            labels.add(dateKey);
+            index++;
+        }
+
+        // Create dataset
+        LineDataSet dataSet = new LineDataSet(entries, "Calories");
+        dataSet.setColor(Color.parseColor("#FF9800"));
+        dataSet.setCircleColor(Color.parseColor("#FF9800"));
+        dataSet.setLineWidth(3f);
+        dataSet.setCircleRadius(5f);
+        dataSet.setDrawCircleHole(false);
+        dataSet.setValueTextSize(10f);
+        dataSet.setDrawFilled(true);
+        dataSet.setFillColor(Color.parseColor("#FFE0B2"));
+        dataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
+
+        LineData lineData = new LineData(dataSet);
+
+        // Configure chart
+        binding.caloriesTrendChart.setData(lineData);
+        binding.caloriesTrendChart.animateX(1000, Easing.EaseInOutQuad);
+
+        Description description = new Description();
+        description.setText("");
+        binding.caloriesTrendChart.setDescription(description);
+
+        // X-axis
+        XAxis xAxis = binding.caloriesTrendChart.getXAxis();
+        xAxis.setValueFormatter(new IndexAxisValueFormatter(labels));
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        xAxis.setGranularity(1f);
+        xAxis.setDrawGridLines(false);
+
+        // Y-axis
+        YAxis leftAxis = binding.caloriesTrendChart.getAxisLeft();
+        leftAxis.setAxisMinimum(0f);
+
+        binding.caloriesTrendChart.getAxisRight().setEnabled(false);
+        binding.caloriesTrendChart.getLegend().setEnabled(false);
+
+        binding.caloriesTrendChart.invalidate();
     }
 }

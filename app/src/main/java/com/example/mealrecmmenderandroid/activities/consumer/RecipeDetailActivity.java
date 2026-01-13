@@ -76,6 +76,7 @@ public class RecipeDetailActivity extends AppCompatActivity {
         loadRecipe();
         loadComments();
         incrementViewCount();
+        setupRealtimeCountsListener(); // Add real-time listener for counts
     }
 
     private void setupToolbar() {
@@ -110,6 +111,31 @@ public class RecipeDetailActivity extends AppCompatActivity {
         binding.commentsRecyclerView.setNestedScrollingEnabled(false);
 
         binding.submitCommentButton.setOnClickListener(v -> submitComment());
+    }
+
+    // NEW METHOD: Real-time listener for view and cook counts
+    private void setupRealtimeCountsListener() {
+        firebaseHelper.getRecipeRef(recipeId)
+                .addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        if (snapshot.exists()) {
+                            Integer viewCount = snapshot.child("viewCount").getValue(Integer.class);
+                            Integer cookCount = snapshot.child("cookCount").getValue(Integer.class);
+
+                            if (viewCount == null) viewCount = 0;
+                            if (cookCount == null) cookCount = 0;
+
+                            binding.viewCountTextView.setText(viewCount + (viewCount == 1 ? " view" : " views"));
+                            binding.cookCountTextView.setText(cookCount + (cookCount == 1 ? " time cooked" : " times cooked"));
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        android.util.Log.e("RecipeDetail", "Failed to load counts: " + error.getMessage());
+                    }
+                });
     }
 
     private void loadComments() {
@@ -426,7 +452,8 @@ public class RecipeDetailActivity extends AppCompatActivity {
         binding.ratingBar.setRating((float) recipe.getAverageRating());
         binding.ratingCountTextView.setText("(" + recipe.getTotalRatings() + " ratings)");
 
-        // View count and cook count
+        // View count and cook count - Now handled by setupRealtimeCountsListener()
+        // Initial placeholder text
         binding.viewCountTextView.setText("0 views");
         binding.cookCountTextView.setText("0 times cooked");
 
@@ -667,6 +694,7 @@ public class RecipeDetailActivity extends AppCompatActivity {
                         if (error != null) {
                             android.util.Log.e("RecipeDetail", "Cook count update failed: " + error.getMessage());
                         }
+                        // UI will be updated by the real-time listener
                     }
                 });
     }
@@ -693,6 +721,7 @@ public class RecipeDetailActivity extends AppCompatActivity {
                         if (error != null) {
                             android.util.Log.e("RecipeDetail", "View count update failed: " + error.getMessage());
                         }
+                        // UI will be updated by the real-time listener
                     }
                 });
     }

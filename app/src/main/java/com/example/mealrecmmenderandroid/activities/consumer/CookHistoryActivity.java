@@ -135,7 +135,7 @@ public class CookHistoryActivity extends AppCompatActivity {
 
         for (CookHistory history : historyList) {
             totalCalories += history.getCalories();
-            averageRating += history.getUserRating();
+            averageRating += history.getRating();
         }
 
         if (totalMeals > 0) {

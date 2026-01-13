@@ -1,29 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background_color">
 
-    <com.google.android.material.appbar.MaterialToolbar
-        android:id="@+id/toolbar"
+    <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="@color/primary_color"
-        android:elevation="4dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:navigationIcon="@drawable/ic_arrow_back"
-        app:title="Analytics"
-        app:titleTextColor="@android:color/white" />
+        android:layout_height="wrap_content">
 
-    <ScrollView
-        android:id="@+id/chartsLayout"
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/primary_color"
+            android:elevation="4dp"
+            app:titleTextColor="@android:color/white" />
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:fillViewport="true"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/toolbar">
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -31,16 +30,17 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- Summary Cards Row 1 -->
+            <!-- Statistics Cards -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:weightSum="2">
 
+                <!-- This Week Card -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="0dp"
-                    android:layout_height="100dp"
+                    android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:layout_marginEnd="8dp"
                     app:cardCornerRadius="12dp"
@@ -48,110 +48,36 @@
 
                     <LinearLayout
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"
+                        android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:gravity="center"
-                        android:padding="16dp">
+                        android:padding="20dp"
+                        android:gravity="center">
 
                         <TextView
-                            android:id="@+id/totalMealsTextView"
+                            android:id="@+id/thisWeekCountTextView"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="0"
-                            android:textSize="32sp"
+                            android:textSize="48sp"
                             android:textStyle="bold"
                             android:textColor="@color/primary_color" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text="Total Meals"
-                            android:textSize="12sp"
-                            android:textColor="@color/text_secondary" />
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-
-                <com.google.android.material.card.MaterialCardView
-                    android:layout_width="0dp"
-                    android:layout_height="100dp"
-                    android:layout_weight="1"
-                    android:layout_marginStart="8dp"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="4dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:orientation="vertical"
-                        android:gravity="center"
-                        android:padding="16dp">
-
-                        <TextView
-                            android:id="@+id/totalCaloriesTextView"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="0"
-                            android:textSize="32sp"
-                            android:textStyle="bold"
-                            android:textColor="@color/primary_color" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text="Total Calories"
-                            android:textSize="12sp"
-                            android:textColor="@color/text_secondary" />
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-            </LinearLayout>
-
-            <!-- Summary Cards Row 2 -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:orientation="horizontal"
-                android:weightSum="2">
-
-                <com.google.android.material.card.MaterialCardView
-                    android:layout_width="0dp"
-                    android:layout_height="100dp"
-                    android:layout_weight="1"
-                    android:layout_marginEnd="8dp"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="4dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:orientation="vertical"
-                        android:gravity="center"
-                        android:padding="16dp">
-
-                        <TextView
-                            android:id="@+id/weeklyCaloriesTextView"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="0"
-                            android:textSize="32sp"
-                            android:textStyle="bold"
-                            android:textColor="@color/success_color" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
                             android:text="This Week"
-                            android:textSize="12sp"
-                            android:textColor="@color/text_secondary" />
+                            android:textSize="14sp"
+                            android:textColor="@color/text_secondary"
+                            android:layout_marginTop="4dp" />
+
                     </LinearLayout>
+
                 </com.google.android.material.card.MaterialCardView>
 
+                <!-- This Month Card -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="0dp"
-                    android:layout_height="100dp"
+                    android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:layout_marginStart="8dp"
                     app:cardCornerRadius="12dp"
@@ -159,36 +85,39 @@
 
                     <LinearLayout
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"
+                        android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:gravity="center"
-                        android:padding="16dp">
+                        android:padding="20dp"
+                        android:gravity="center">
 
                         <TextView
-                            android:id="@+id/monthlyCaloriesTextView"
+                            android:id="@+id/thisMonthCountTextView"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="0"
-                            android:textSize="32sp"
+                            android:textSize="48sp"
                             android:textStyle="bold"
-                            android:textColor="@color/warning_color" />
+                            android:textColor="#FF9800" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
                             android:text="This Month"
-                            android:textSize="12sp"
-                            android:textColor="@color/text_secondary" />
+                            android:textSize="14sp"
+                            android:textColor="@color/text_secondary"
+                            android:layout_marginTop="4dp" />
+
                     </LinearLayout>
+
                 </com.google.android.material.card.MaterialCardView>
+
             </LinearLayout>
 
-            <!-- Chart Placeholders -->
+            <!-- Most Cooked Meals Chart -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="16dp"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="4dp">
 
@@ -204,25 +133,33 @@
                         android:text="Most Cooked Meals"
                         android:textSize="18sp"
                         android:textStyle="bold"
-                        android:textColor="@color/text_primary" />
+                        android:textColor="@color/text_primary"
+                        android:layout_marginBottom="16dp" />
+
+                    <com.github.mikephil.charting.charts.BarChart
+                        android:id="@+id/mostCookedChart"
+                        android:layout_width="match_parent"
+                        android:layout_height="250dp" />
 
                     <TextView
+                        android:id="@+id/noMostCookedDataTextView"
                         android:layout_width="match_parent"
-                        android:layout_height="200dp"
-                        android:layout_marginTop="16dp"
-                        android:background="@color/border_color"
+                        android:layout_height="250dp"
                         android:gravity="center"
-                        android:text="Chart will appear here\n(MPAndroidChart required)"
+                        android:text="No data available yet.\nStart cooking to see your stats!"
+                        android:textSize="14sp"
                         android:textColor="@color/text_secondary"
-                        android:textSize="14sp" />
+                        android:visibility="gone" />
+
                 </LinearLayout>
+
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- Calories Trend Chart -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:layout_marginBottom="16dp"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="4dp">
 
@@ -238,69 +175,38 @@
                         android:text="Calories Trend (Last 7 Days)"
                         android:textSize="18sp"
                         android:textStyle="bold"
-                        android:textColor="@color/text_primary" />
+                        android:textColor="@color/text_primary"
+                        android:layout_marginBottom="16dp" />
+
+                    <com.github.mikephil.charting.charts.LineChart
+                        android:id="@+id/caloriesTrendChart"
+                        android:layout_width="match_parent"
+                        android:layout_height="250dp" />
 
                     <TextView
+                        android:id="@+id/noCaloriesDataTextView"
                         android:layout_width="match_parent"
-                        android:layout_height="200dp"
-                        android:layout_marginTop="16dp"
-                        android:background="@color/border_color"
+                        android:layout_height="250dp"
                         android:gravity="center"
-                        android:text="Chart will appear here\n(MPAndroidChart required)"
+                        android:text="No data available yet.\nStart tracking your meals!"
+                        android:textSize="14sp"
                         android:textColor="@color/text_secondary"
-                        android:textSize="14sp" />
+                        android:visibility="gone" />
+
                 </LinearLayout>
+
             </com.google.android.material.card.MaterialCardView>
 
         </LinearLayout>
-    </ScrollView>
 
-    <!-- Empty State -->
-    <LinearLayout
-        android:id="@+id/emptyStateLayout"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/toolbar">
+    </androidx.core.widget.NestedScrollView>
 
-        <ImageView
-            android:layout_width="120dp"
-            android:layout_height="120dp"
-            android:src="@drawable/ic_empty_analytics"
-            app:tint="@color/text_secondary" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="No data to analyze"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:textColor="@color/text_primary" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="Start cooking meals to see your analytics"
-            android:textSize="14sp"
-            android:textColor="@color/text_secondary"
-            android:gravity="center" />
-    </LinearLayout>
-
+    <!-- Progress Bar -->
     <ProgressBar
         android:id="@+id/progressBar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/toolbar" />
+        android:layout_gravity="center"
+        android:visibility="gone" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
