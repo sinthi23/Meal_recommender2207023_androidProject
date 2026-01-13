@@ -3,7 +3,6 @@ package com.example.mealrecmmenderandroid.activities;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Patterns;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
@@ -41,7 +40,7 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        // Initialize Firebase
+        // Initialize Firebase first
         mAuth = FirebaseAuth.getInstance();
         usersRef = FirebaseDatabase.getInstance()
                 .getInstance("https://meal-recommender-android-9801b-default-rtdb.firebaseio.com")

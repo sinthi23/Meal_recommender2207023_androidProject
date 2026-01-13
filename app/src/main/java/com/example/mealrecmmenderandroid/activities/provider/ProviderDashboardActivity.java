@@ -54,10 +54,10 @@ public class ProviderDashboardActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setTitle("Provider Dashboard");
 
-            // Show user email in subtitle
-            String userEmail = sessionManager.getUserEmail();
-            if (userEmail != null && !userEmail.isEmpty()) {
-                getSupportActionBar().setSubtitle(userEmail);
+            // Show username in subtitle instead of email
+            String username = sessionManager.getUserName();
+            if (username != null && !username.isEmpty()) {
+                getSupportActionBar().setSubtitle(username);
             }
         }
         binding.toolbar.setNavigationOnClickListener(new View.OnClickListener() {

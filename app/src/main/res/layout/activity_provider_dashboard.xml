@@ -34,52 +34,11 @@
                 android:padding="16dp">
 
                 <!-- Award Banner -->
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/awardBannerCard"
+                <include
+                    layout="@layout/banner_annual_awards"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:visibility="gone"
-                    app:cardCornerRadius="8dp"
-                    app:cardElevation="4dp"
-                    android:layout_marginBottom="16dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="16dp"
-                        android:background="@android:color/holo_orange_light">
-
-                        <TextView
-                            android:id="@+id/awardRankTextView"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="1st Place"
-                            android:textSize="24sp"
-                            android:textStyle="bold"
-                            android:textColor="@android:color/white" />
-
-                        <TextView
-                            android:id="@+id/awardPrizeTextView"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text="Prize: $1000"
-                            android:textSize="18sp"
-                            android:textColor="@android:color/white" />
-
-                        <TextView
-                            android:id="@+id/awardYearTextView"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text="Award 2025"
-                            android:textSize="14sp"
-                            android:textColor="@android:color/white" />
-
-                    </LinearLayout>
-
-                </com.google.android.material.card.MaterialCardView>
+                    android:layout_marginBottom="16dp" />
 
                 <!-- Stats Cards -->
                 <TextView
