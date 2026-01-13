@@ -1,15 +1,17 @@
 package com.example.mealrecmmenderandroid.activities;
 
 import android.os.Bundle;
+import android.text.TextUtils;
+import android.util.Patterns;
 import android.view.View;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.mealrecmmenderandroid.databinding.ActivityForgotPasswordBinding;
 import com.example.mealrecmmenderandroid.helpers.FirebaseHelper;
-import com.example.mealrecmmenderandroid.utils.ValidationHelper;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
@@ -51,9 +53,15 @@ public class ForgotPasswordActivity extends AppCompatActivity {
             email = binding.emailEditText.getText().toString().trim();
         }
 
-        String emailError = ValidationHelper.getEmailError(email);
-        if (emailError != null) {
-            binding.emailEditText.setError(emailError);
+        // Validation
+        if (TextUtils.isEmpty(email)) {
+            binding.emailEditText.setError("Email is required");
+            binding.emailEditText.requestFocus();
+            return;
+        }
+
+        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            binding.emailEditText.setError("Please enter a valid email address");
             binding.emailEditText.requestFocus();
             return;
         }
@@ -68,26 +76,54 @@ public class ForgotPasswordActivity extends AppCompatActivity {
                         showLoading(false);
 
                         if (task.isSuccessful()) {
-                            Toast.makeText(ForgotPasswordActivity.this,
-                                    "Password reset email sent to " + finalEmail,
-                                    Toast.LENGTH_LONG).show();
-                            finish();
+                            showSuccessDialog(finalEmail);
                         } else {
-                            String error = "Unknown error";
+                            String errorMessage = "Failed to send reset email";
                             if (task.getException() != null) {
-                                error = task.getException().getMessage();
+                                errorMessage = task.getException().getMessage();
+
+                                // User-friendly error messages
+                                if (errorMessage.contains("no user record") || errorMessage.contains("user-not-found")) {
+                                    errorMessage = "No account found with this email address. Please check your email or register a new account.";
+                                } else if (errorMessage.contains("invalid-email")) {
+                                    errorMessage = "Invalid email address format.";
+                                } else if (errorMessage.contains("network")) {
+                                    errorMessage = "Network error. Please check your internet connection.";
+                                }
                             }
-                            Toast.makeText(ForgotPasswordActivity.this,
-                                    "Failed to send reset email: " + error,
-                                    Toast.LENGTH_LONG).show();
+                            showErrorDialog(errorMessage);
                         }
                     }
                 });
+    }
+
+    private void showSuccessDialog(String email) {
+        new AlertDialog.Builder(this)
+                .setTitle("Email Sent")
+                .setMessage("Password reset link has been sent to " + email +
+                        ". Please check your email inbox and spam folder.")
+                .setPositiveButton("OK", (dialog, which) -> finish())
+                .setCancelable(false)
+                .show();
+    }
+
+    private void showErrorDialog(String message) {
+        new AlertDialog.Builder(this)
+                .setTitle("Error")
+                .setMessage(message)
+                .setPositiveButton("OK", null)
+                .show();
     }
 
     private void showLoading(boolean show) {
         binding.progressBar.setVisibility(show ? View.VISIBLE : View.GONE);
         binding.resetPasswordButton.setEnabled(!show);
         binding.emailEditText.setEnabled(!show);
+
+        if (show) {
+            binding.resetPasswordButton.setText("SENDING...");
+        } else {
+            binding.resetPasswordButton.setText("SEND RESET LINK");
+        }
     }
 }

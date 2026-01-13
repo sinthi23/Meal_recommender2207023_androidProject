@@ -3,6 +3,7 @@ package com.example.mealrecmmenderandroid.activities;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Patterns;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
@@ -29,7 +30,7 @@ public class LoginActivity extends AppCompatActivity {
 
     private TextInputEditText etEmailOrUsername, etPassword;
     private Button btnLogin;
-    private TextView tvRegister;
+    private TextView tvRegister, tvForgotPassword;
     private ProgressBar progressBar;
     private FirebaseAuth mAuth;
     private DatabaseReference usersRef;
@@ -65,6 +66,7 @@ public class LoginActivity extends AppCompatActivity {
         etPassword = findViewById(R.id.et_password);
         btnLogin = findViewById(R.id.btn_login);
         tvRegister = findViewById(R.id.tv_register);
+        tvForgotPassword = findViewById(R.id.tv_forgot_password);
         progressBar = findViewById(R.id.progress_bar);
     }
 
@@ -73,6 +75,10 @@ public class LoginActivity extends AppCompatActivity {
 
         tvRegister.setOnClickListener(v -> {
             startActivity(new Intent(LoginActivity.this, RegisterActivity.class));
+        });
+
+        tvForgotPassword.setOnClickListener(v -> {
+            startActivity(new Intent(LoginActivity.this, ForgotPasswordActivity.class));
         });
     }
 
@@ -185,7 +191,7 @@ public class LoginActivity extends AppCompatActivity {
                                                     finalAccountType = userType;
                                                 }
                                                 if (finalAccountType == null || finalAccountType.isEmpty()) {
-                                                    finalAccountType = "Consumer";
+                                                    finalAccountType = "consumer";
                                                 }
 
                                                 // Migrate username if doesn't exist
@@ -234,11 +240,11 @@ public class LoginActivity extends AppCompatActivity {
                                 task.getException().getMessage() : "Login failed";
 
                         // User-friendly error messages
-                        if (errorMessage.contains("no user record")) {
+                        if (errorMessage.contains("no user record") || errorMessage.contains("user-not-found")) {
                             errorMessage = "Account not found. Please check your credentials.";
-                        } else if (errorMessage.contains("password is invalid")) {
+                        } else if (errorMessage.contains("password is invalid") || errorMessage.contains("wrong-password")) {
                             errorMessage = "Incorrect password. Please try again.";
-                        } else if (errorMessage.contains("network error")) {
+                        } else if (errorMessage.contains("network")) {
                             errorMessage = "Network error. Please check your connection.";
                         }
 
