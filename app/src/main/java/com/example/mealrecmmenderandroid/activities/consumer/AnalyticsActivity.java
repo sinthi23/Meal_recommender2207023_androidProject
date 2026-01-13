@@ -100,16 +100,16 @@ public class AnalyticsActivity extends AppCompatActivity {
     }
 
     private void updateStatistics() {
-        // Calculate this week's meals
+        // Calculate this week's meals (last 7 days)
         int thisWeekCount = 0;
         int thisMonthCount = 0;
 
         Calendar calendar = Calendar.getInstance();
         long currentTime = System.currentTimeMillis();
 
-        // Start of this week (Sunday)
+        // Start of last 7 days (7 days ago at midnight)
         calendar.setTimeInMillis(currentTime);
-        calendar.set(Calendar.DAY_OF_WEEK, Calendar.SUNDAY);
+        calendar.add(Calendar.DAY_OF_YEAR, -6);
         calendar.set(Calendar.HOUR_OF_DAY, 0);
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.SECOND, 0);
