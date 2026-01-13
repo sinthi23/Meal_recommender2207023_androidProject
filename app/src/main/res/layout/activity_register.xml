@@ -180,6 +180,54 @@
                 android:inputType="textPassword" />
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- Password Requirements -->
+        <LinearLayout
+            android:id="@+id/passwordRequirementsLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="vertical"
+            android:visibility="gone"
+            app:layout_constraintTop_toBottomOf="@id/passwordLayout">
+
+            <TextView
+                android:id="@+id/tv_requirement_length"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="• Must have at least 6 characters"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                android:layout_marginTop="4dp" />
+
+            <TextView
+                android:id="@+id/tv_requirement_uppercase"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="• Must have uppercase letter"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                android:layout_marginTop="4dp" />
+
+            <TextView
+                android:id="@+id/tv_requirement_lowercase"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="• Must have lowercase letter"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                android:layout_marginTop="4dp" />
+
+            <TextView
+                android:id="@+id/tv_requirement_special"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="• Must have special character"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                android:layout_marginTop="4dp" />
+
+        </LinearLayout>
+
         <!-- Confirm Password Field -->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/confirmPasswordLayout"
@@ -190,7 +238,7 @@
             android:hint="Confirm Password"
             app:endIconMode="password_toggle"
             app:startIconDrawable="@android:drawable/ic_lock_lock"
-            app:layout_constraintTop_toBottomOf="@id/passwordLayout">
+            app:layout_constraintTop_toBottomOf="@id/passwordRequirementsLayout">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/et_confirm_password"

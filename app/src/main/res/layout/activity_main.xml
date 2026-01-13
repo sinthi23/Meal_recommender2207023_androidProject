@@ -31,10 +31,22 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
+                android:orientation="vertical">
 
-                <!-- Ingredient Selection Button -->
+                <!-- Annual Awards Banner -->
+                <include
+                    layout="@layout/banner_annual_awards"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <!-- Main Content Container -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <!-- Ingredient Selection Button -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/selectIngredientsButton"
                     android:layout_width="match_parent"
@@ -85,6 +97,8 @@
                     app:icon="@drawable/ic_recipe"
                     app:iconGravity="start"
                     app:strokeColor="@color/primary_color" />
+
+                </LinearLayout>
 
             </LinearLayout>
 

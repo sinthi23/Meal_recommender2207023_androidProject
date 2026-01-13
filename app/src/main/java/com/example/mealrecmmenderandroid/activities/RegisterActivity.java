@@ -2,9 +2,12 @@ package com.example.mealrecmmenderandroid.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.util.Patterns;
 import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
@@ -12,6 +15,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
@@ -34,6 +38,10 @@ public class RegisterActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private DatabaseReference usersRef;
     private SessionManager sessionManager;
+    
+    // Password requirement views
+    private TextView tvRequirementLength, tvRequirementUppercase, tvRequirementLowercase, tvRequirementSpecial;
+    private LinearLayout passwordRequirementsLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,6 +73,13 @@ public class RegisterActivity extends AppCompatActivity {
         btnRegister = findViewById(R.id.btn_register);
         tvLogin = findViewById(R.id.tv_login);
         progressBar = findViewById(R.id.progress_bar);
+        
+        // Initialize password requirement views
+        tvRequirementLength = findViewById(R.id.tv_requirement_length);
+        tvRequirementUppercase = findViewById(R.id.tv_requirement_uppercase);
+        tvRequirementLowercase = findViewById(R.id.tv_requirement_lowercase);
+        tvRequirementSpecial = findViewById(R.id.tv_requirement_special);
+        passwordRequirementsLayout = findViewById(R.id.passwordRequirementsLayout);
     }
 
     private void setupListeners() {
@@ -74,6 +89,54 @@ public class RegisterActivity extends AppCompatActivity {
             startActivity(new Intent(RegisterActivity.this, LoginActivity.class));
             finish();
         });
+        
+        // Add password validation listener
+        etPassword.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                validatePassword(s.toString());
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+    }
+    
+    private void validatePassword(String password) {
+        // Show requirements layout when user starts typing
+        if (!password.isEmpty()) {
+            passwordRequirementsLayout.setVisibility(View.VISIBLE);
+        } else {
+            passwordRequirementsLayout.setVisibility(View.GONE);
+            return;
+        }
+        
+        // Check length (at least 6 characters)
+        boolean hasLength = password.length() >= 6;
+        updateRequirementUI(tvRequirementLength, hasLength);
+        
+        // Check uppercase letter
+        boolean hasUppercase = password.matches(".*[A-Z].*");
+        updateRequirementUI(tvRequirementUppercase, hasUppercase);
+        
+        // Check lowercase letter
+        boolean hasLowercase = password.matches(".*[a-z].*");
+        updateRequirementUI(tvRequirementLowercase, hasLowercase);
+        
+        // Check special character
+        boolean hasSpecial = password.matches(".*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?].*");
+        updateRequirementUI(tvRequirementSpecial, hasSpecial);
+    }
+    
+    private void updateRequirementUI(TextView textView, boolean isMet) {
+        if (isMet) {
+            textView.setTextColor(ContextCompat.getColor(this, R.color.text_success));
+        } else {
+            textView.setTextColor(ContextCompat.getColor(this, R.color.text_secondary));
+        }
     }
 
     private void registerUser() {
