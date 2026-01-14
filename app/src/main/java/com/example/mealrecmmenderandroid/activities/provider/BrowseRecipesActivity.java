@@ -52,7 +52,6 @@ public class BrowseRecipesActivity extends AppCompatActivity {
     }
 
     private void setupRecyclerView() {
-        // FIXED: Use constructor without Context and without selectedIngredients
         recipeAdapter = new RecipeAdapter(allRecipes, recipe -> {
             Intent intent = new Intent(BrowseRecipesActivity.this, RecipeDetailActivity.class);
             intent.putExtra("recipeId", recipe.getRecipeId());

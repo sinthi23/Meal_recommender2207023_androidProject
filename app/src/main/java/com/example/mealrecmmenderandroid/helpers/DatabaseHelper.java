@@ -8,11 +8,9 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
 
-    // Database Information
     private static final String DATABASE_NAME = "MealRecommender.db";
     private static final int DATABASE_VERSION = 1;
 
-    // Users Table
     private static final String TABLE_USERS = "users";
     private static final String COLUMN_USER_ID = "user_id";
     private static final String COLUMN_USER_NAME = "user_name";
@@ -22,7 +20,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String COLUMN_USER_PHONE = "user_phone";
     private static final String COLUMN_CREATED_AT = "created_at";
 
-    // Create Users Table Query
     private static final String CREATE_USER_TABLE = "CREATE TABLE " + TABLE_USERS + "("
             + COLUMN_USER_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
             + COLUMN_USER_NAME + " TEXT,"
@@ -33,7 +30,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             + COLUMN_CREATED_AT + " DATETIME DEFAULT CURRENT_TIMESTAMP"
             + ")";
 
-    // Recipes Table
     private static final String TABLE_RECIPES = "recipes";
     private static final String COLUMN_RECIPE_ID = "recipe_id";
     private static final String COLUMN_RECIPE_NAME = "recipe_name";
@@ -44,7 +40,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String COLUMN_RECIPE_CATEGORY = "recipe_category";
     private static final String COLUMN_RECIPE_IMAGE = "recipe_image";
 
-    // Create Recipes Table Query
     private static final String CREATE_RECIPE_TABLE = "CREATE TABLE " + TABLE_RECIPES + "("
             + COLUMN_RECIPE_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
             + COLUMN_RECIPE_NAME + " TEXT,"
@@ -56,37 +51,29 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             + COLUMN_RECIPE_IMAGE + " TEXT"
             + ")";
 
-    // Constructor
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        // Create tables
         db.execSQL(CREATE_USER_TABLE);
         db.execSQL(CREATE_RECIPE_TABLE);
 
-        // Insert default data
         insertDefaultAdmin(db);
         insertSampleRecipes(db);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        // Drop older tables if existed
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_USERS);
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_RECIPES);
 
-        // Create tables again
         onCreate(db);
     }
 
-    // ==================== USER OPERATIONS ====================
 
-    /**
-     * Insert default admin user
-     */
+
     private void insertDefaultAdmin(SQLiteDatabase db) {
         ContentValues values = new ContentValues();
         values.put(COLUMN_USER_NAME, "Admin");
@@ -98,9 +85,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.insert(TABLE_USERS, null, values);
     }
 
-    /**
-     * Add new user to database
-     */
+
     public long addUser(String name, String email, String password, String role, String phone) {
         SQLiteDatabase db = this.getWritableDatabase();
 
@@ -117,9 +102,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return id;
     }
 
-    /**
-     * Check if user credentials are valid
-     */
+
     public boolean checkUserCredentials(String email, String password) {
         SQLiteDatabase db = this.getReadableDatabase();
 
@@ -136,9 +119,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return count > 0;
     }
 
-    /**
-     * Check if email already exists
-     */
+
     public boolean checkEmailExists(String email) {
         SQLiteDatabase db = this.getReadableDatabase();
 
@@ -155,9 +136,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return count > 0;
     }
 
-    /**
-     * Get user ID by email
-     */
     public int getUserId(String email) {
         SQLiteDatabase db = this.getReadableDatabase();
 
@@ -178,9 +156,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return userId;
     }
 
-    /**
-     * Get user name by email
-     */
     public String getUserName(String email) {
         SQLiteDatabase db = this.getReadableDatabase();
 
@@ -201,9 +176,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return userName;
     }
 
-    /**
-     * Get user role by email
-     */
+
     public String getUserRole(String email) {
         SQLiteDatabase db = this.getReadableDatabase();
 
@@ -224,13 +197,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return userRole;
     }
 
-    // ==================== RECIPE OPERATIONS ====================
 
-    /**
-     * Insert sample recipes
-     */
     private void insertSampleRecipes(SQLiteDatabase db) {
-        // Recipe 1: Chicken Salad
         ContentValues recipe1 = new ContentValues();
         recipe1.put(COLUMN_RECIPE_NAME, "Healthy Chicken Salad");
         recipe1.put(COLUMN_RECIPE_DESCRIPTION, "A light and nutritious chicken salad");
@@ -241,7 +209,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         recipe1.put(COLUMN_RECIPE_IMAGE, "");
         db.insert(TABLE_RECIPES, null, recipe1);
 
-        // Recipe 2: Vegetable Soup
         ContentValues recipe2 = new ContentValues();
         recipe2.put(COLUMN_RECIPE_NAME, "Vegetable Soup");
         recipe2.put(COLUMN_RECIPE_DESCRIPTION, "Warm and comforting vegetable soup");
@@ -252,7 +219,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         recipe2.put(COLUMN_RECIPE_IMAGE, "");
         db.insert(TABLE_RECIPES, null, recipe2);
 
-        // Recipe 3: Grilled Salmon
         ContentValues recipe3 = new ContentValues();
         recipe3.put(COLUMN_RECIPE_NAME, "Grilled Salmon");
         recipe3.put(COLUMN_RECIPE_DESCRIPTION, "Omega-3 rich grilled salmon");
@@ -264,17 +230,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.insert(TABLE_RECIPES, null, recipe3);
     }
 
-    /**
-     * Get all recipes
-     */
+
     public Cursor getAllRecipes() {
         SQLiteDatabase db = this.getReadableDatabase();
         return db.rawQuery("SELECT * FROM " + TABLE_RECIPES, null);
     }
 
-    /**
-     * Get recipes by category
-     */
     public Cursor getRecipesByCategory(String category) {
         SQLiteDatabase db = this.getReadableDatabase();
         return db.rawQuery("SELECT * FROM " + TABLE_RECIPES +
@@ -282,9 +243,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 new String[]{category});
     }
 
-    /**
-     * Search recipes by name
-     */
     public Cursor searchRecipes(String query) {
         SQLiteDatabase db = this.getReadableDatabase();
         return db.rawQuery("SELECT * FROM " + TABLE_RECIPES +

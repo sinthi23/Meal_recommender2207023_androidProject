@@ -64,10 +64,8 @@ public class MainActivity extends AppCompatActivity
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        // Initialize Firebase Auth
         mAuth = FirebaseAuth.getInstance();
 
-        // Initialize Firebase
         firebaseHelper = FirebaseHelper.getInstance();
         sessionManager = new SessionManager(this);
         selectedIngredients = new HashSet<>();
@@ -79,7 +77,6 @@ public class MainActivity extends AppCompatActivity
         setupListeners();
         loadRecipes();
 
-        // Test connection
         testFirebaseConnection();
     }
 
@@ -91,13 +88,13 @@ public class MainActivity extends AppCompatActivity
 
             testRef.setValue("Connected at " + System.currentTimeMillis())
                     .addOnSuccessListener(aVoid -> {
-                        Log.d(TAG, "✅ Firebase Connection Success!");
+                        Log.d(TAG, "Firebase Connection Success!");
                     })
                     .addOnFailureListener(e -> {
-                        Log.e(TAG, "❌ Firebase Connection Failed", e);
+                        Log.e(TAG, "Firebase Connection Failed", e);
                     });
         } catch (Exception e) {
-            Log.e(TAG, "❌ Firebase Error", e);
+            Log.e(TAG, "Firebase Error", e);
         }
     }
 
@@ -117,7 +114,6 @@ public class MainActivity extends AppCompatActivity
 
         binding.navigationView.setNavigationItemSelectedListener(this);
 
-        // Load appropriate menu based on user type
         if (sessionManager.isProvider()) {
             binding.navigationView.getMenu().clear();
             binding.navigationView.inflateMenu(R.menu.navigation_menu_provider);
@@ -125,7 +121,6 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void setupRecyclerView() {
-        // FIXED: Removed Context parameter
         recipeAdapter = new RecipeAdapter(new ArrayList<>(),
                 selectedIngredients, recipe -> {
             Intent intent = new Intent(this, RecipeDetailActivity.class);
@@ -138,8 +133,6 @@ public class MainActivity extends AppCompatActivity
 
     private void setupListeners() {
         binding.selectIngredientsButton.setOnClickListener(v -> showIngredientSelection());
-
-        // Add Browse Recipes button listener
         binding.browseRecipesButton.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, BrowseRecipesActivity.class);
             startActivity(intent);
@@ -250,7 +243,6 @@ public class MainActivity extends AppCompatActivity
 
         for (Recipe r : allRecipes) {
             try {
-                // Use helper method to get ingredients list - FIXED
                 List<String> recipeIngredients = r.getIngredientsList();
 
                 if (recipeIngredients != null && !recipeIngredients.isEmpty()) {
@@ -304,9 +296,7 @@ public class MainActivity extends AppCompatActivity
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
 
-        // Consumer menu items
         if (id == R.id.nav_home) {
-            // Already here
         } else if (id == R.id.nav_cook_history) {
             startActivity(new Intent(this, CookHistoryActivity.class));
         } else if (id == R.id.nav_analytics) {
@@ -316,7 +306,6 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.nav_logout) {
             logoutUser();
 
-            // Provider menu items
         } else if (id == R.id.nav_provider_dashboard) {
             startActivity(new Intent(this, ProviderDashboardActivity.class));
         } else if (id == R.id.nav_browse_recipes) {
@@ -332,20 +321,17 @@ public class MainActivity extends AppCompatActivity
                 .setTitle("Logout")
                 .setMessage("Are you sure you want to logout?")
                 .setPositiveButton("Yes", (dialog, which) -> {
-                    // Sign out from Firebase Auth
+
                     if (mAuth != null) {
                         mAuth.signOut();
                     }
 
-                    // Clear session manager
                     sessionManager.logoutUser();
 
-                    // Show toast message
                     Toast.makeText(MainActivity.this,
                             "Logged out successfully",
                             Toast.LENGTH_SHORT).show();
 
-                    // Redirect to login screen and clear back stack
                     Intent intent = new Intent(MainActivity.this, LoginActivity.class);
                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     startActivity(intent);

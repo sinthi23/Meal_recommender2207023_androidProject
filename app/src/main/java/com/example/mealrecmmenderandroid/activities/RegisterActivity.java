@@ -38,8 +38,7 @@ public class RegisterActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private DatabaseReference usersRef;
     private SessionManager sessionManager;
-    
-    // Password requirement views
+
     private TextView tvRequirementLength, tvRequirementUppercase, tvRequirementLowercase, tvRequirementSpecial;
     private LinearLayout passwordRequirementsLayout;
 
@@ -48,17 +47,14 @@ public class RegisterActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
 
-        // Initialize Firebase
         mAuth = FirebaseAuth.getInstance();
         usersRef = FirebaseDatabase.getInstance()
                 .getInstance("https://meal-recommender-android-9801b-default-rtdb.firebaseio.com")
                 .getReference("users");
         sessionManager = new SessionManager(this);
 
-        // Initialize views
         initViews();
 
-        // Setup listeners
         setupListeners();
     }
 
@@ -73,8 +69,7 @@ public class RegisterActivity extends AppCompatActivity {
         btnRegister = findViewById(R.id.btn_register);
         tvLogin = findViewById(R.id.tv_login);
         progressBar = findViewById(R.id.progress_bar);
-        
-        // Initialize password requirement views
+
         tvRequirementLength = findViewById(R.id.tv_requirement_length);
         tvRequirementUppercase = findViewById(R.id.tv_requirement_uppercase);
         tvRequirementLowercase = findViewById(R.id.tv_requirement_lowercase);
@@ -89,8 +84,7 @@ public class RegisterActivity extends AppCompatActivity {
             startActivity(new Intent(RegisterActivity.this, LoginActivity.class));
             finish();
         });
-        
-        // Add password validation listener
+
         etPassword.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -106,27 +100,22 @@ public class RegisterActivity extends AppCompatActivity {
     }
     
     private void validatePassword(String password) {
-        // Show requirements layout when user starts typing
         if (!password.isEmpty()) {
             passwordRequirementsLayout.setVisibility(View.VISIBLE);
         } else {
             passwordRequirementsLayout.setVisibility(View.GONE);
             return;
         }
-        
-        // Check length (at least 6 characters)
+
         boolean hasLength = password.length() >= 6;
         updateRequirementUI(tvRequirementLength, hasLength);
-        
-        // Check uppercase letter
+
         boolean hasUppercase = password.matches(".*[A-Z].*");
         updateRequirementUI(tvRequirementUppercase, hasUppercase);
-        
-        // Check lowercase letter
+
         boolean hasLowercase = password.matches(".*[a-z].*");
         updateRequirementUI(tvRequirementLowercase, hasLowercase);
-        
-        // Check special character
+
         boolean hasSpecial = password.matches(".*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?].*");
         updateRequirementUI(tvRequirementSpecial, hasSpecial);
     }
@@ -147,7 +136,6 @@ public class RegisterActivity extends AppCompatActivity {
         String password = etPassword.getText().toString().trim();
         String confirmPassword = etConfirmPassword.getText().toString().trim();
 
-        // Validation
         if (TextUtils.isEmpty(username)) {
             etUsername.setError("Username is required");
             etUsername.requestFocus();
@@ -190,28 +178,23 @@ public class RegisterActivity extends AppCompatActivity {
             return;
         }
 
-        // Check if user type is selected
         if (rgUserType.getCheckedRadioButtonId() == -1) {
             Toast.makeText(this, "Please select account type", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Get selected user type
         int selectedId = rgUserType.getCheckedRadioButtonId();
         RadioButton selectedRadio = findViewById(selectedId);
         String userType = selectedRadio.getText().toString().toLowerCase();
 
-        // Show progress
         progressBar.setVisibility(View.VISIBLE);
         btnRegister.setEnabled(false);
 
-        // Create Firebase Auth user
         mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         FirebaseUser firebaseUser = mAuth.getCurrentUser();
                         if (firebaseUser != null) {
-                            // Create user object with username
                             User user = new User(
                                     firebaseUser.getUid(),
                                     fullName,
@@ -220,23 +203,20 @@ public class RegisterActivity extends AppCompatActivity {
                                     userType
                             );
 
-                            // Set username
                             user.setUsername(username);
                             user.setAccountType(userType);
                             user.setRegistrationDate(System.currentTimeMillis());
 
-                            // Save to database
                             usersRef.child(firebaseUser.getUid()).setValue(user)
                                     .addOnCompleteListener(dbTask -> {
                                         progressBar.setVisibility(View.GONE);
                                         btnRegister.setEnabled(true);
 
                                         if (dbTask.isSuccessful()) {
-                                            // Save session with username
                                             sessionManager.createLoginSession(
                                                     firebaseUser.getUid(),
                                                     userType,
-                                                    username,  // Use username instead of fullName
+                                                    username,
                                                     email
                                             );
 
@@ -244,7 +224,6 @@ public class RegisterActivity extends AppCompatActivity {
                                                     "Welcome, " + username + "!",
                                                     Toast.LENGTH_SHORT).show();
 
-                                            // Route based on user type
                                             Intent intent;
                                             if ("provider".equalsIgnoreCase(userType)) {
                                                 intent = new Intent(RegisterActivity.this, ProviderDashboardActivity.class);

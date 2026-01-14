@@ -67,20 +67,15 @@ public class CookHistoryAdapter extends RecyclerView.Adapter<CookHistoryAdapter.
         }
 
         public void bind(CookHistory history) {
-            // Recipe name
             binding.recipeNameTextView.setText(history.getRecipeName() != null ?
                     history.getRecipeName() : "Unknown Recipe");
 
-            // Calories
             binding.caloriesTextView.setText(history.getCalories() + " cal");
 
-            // Date - Format timestamp
             binding.cookedDateTextView.setText(formatDate(history.getTimestamp()));
 
-            // Rating
             binding.ratingBar.setRating(history.getRating());
 
-            // Notes - check if exists
             if (history.getNotes() != null && !history.getNotes().isEmpty()) {
                 binding.notesTextView.setText(history.getNotes());
                 binding.notesTextView.setVisibility(android.view.View.VISIBLE);
@@ -88,7 +83,6 @@ public class CookHistoryAdapter extends RecyclerView.Adapter<CookHistoryAdapter.
                 binding.notesTextView.setVisibility(android.view.View.GONE);
             }
 
-            // Load recipe image if available - FIXED
             if (history.getRecipeId() != null && !history.getRecipeId().isEmpty()) {
                 loadRecipeImageFromFirebase(history.getRecipeId());
             } else {
@@ -96,7 +90,6 @@ public class CookHistoryAdapter extends RecyclerView.Adapter<CookHistoryAdapter.
                         com.example.mealrecmmenderandroid.R.drawable.ic_image_placeholder);
             }
 
-            // Click listeners
             itemView.setOnClickListener(v -> {
                 if (listener != null) {
                     listener.onHistoryClick(history);

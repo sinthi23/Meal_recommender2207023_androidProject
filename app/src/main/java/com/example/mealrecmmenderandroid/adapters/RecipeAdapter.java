@@ -27,14 +27,12 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.RecipeView
         void onRecipeClick(Recipe recipe);
     }
 
-    // Constructor for Browse Recipes (no selected ingredients)
     public RecipeAdapter(List<Recipe> recipes, OnRecipeClickListener listener) {
         this.recipes = recipes;
         this.selectedIngredients = null;
         this.listener = listener;
     }
 
-    // Constructor for Recipe List with ingredient filtering
     public RecipeAdapter(List<Recipe> recipes, Set<String> selectedIngredients, OnRecipeClickListener listener) {
         this.recipes = recipes;
         this.selectedIngredients = selectedIngredients;
@@ -78,29 +76,24 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.RecipeView
         public void bind(Recipe recipe) {
             if (recipe == null) return;
 
-            // Set basic info with null checks
             binding.recipeNameTextView.setText(recipe.getRecipeName() != null ? recipe.getRecipeName() : "Unknown Recipe");
             binding.caloriesTextView.setText(recipe.getCalories() + " cal");
 
-            // Calculate total time
             int totalTime = recipe.getPreparationTime() + recipe.getCookingTime();
             binding.timeTextView.setText(totalTime + " min");
 
-            // Health score
             binding.healthScoreTextView.setText("Health: " +
                     String.format("%.0f%%", recipe.getHealthScore()));
 
-            // Rating
+
             binding.ratingBar.setRating((float) recipe.getAverageRating());
 
-            // Load image
             if (recipe.getImageUrl() != null && !recipe.getImageUrl().isEmpty()) {
                 ImageHelper.loadImage(context, recipe.getImageUrl(), binding.recipeImageView);
             } else {
                 binding.recipeImageView.setImageResource(R.drawable.ic_image_placeholder);
             }
 
-            // Calculate missing ingredients
             List<String> recipeIngredients = getRecipeIngredientsList(recipe);
 
             if (selectedIngredients != null && !selectedIngredients.isEmpty()) {
@@ -116,16 +109,13 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.RecipeView
                             context.getResources().getColor(R.color.warning_color));
                 }
             } else {
-                // No selected ingredients - show total count
                 binding.missingIngredientsTextView.setText(recipeIngredients.size() + " ingredients");
                 binding.missingIngredientsTextView.setTextColor(
                         context.getResources().getColor(R.color.text_secondary));
             }
 
-            // Difficulty badge
             setDifficultyBadge(recipe.getDifficulty());
 
-            // Click listener
             itemView.setOnClickListener(v -> {
                 if (listener != null) {
                     listener.onRecipeClick(recipe);
@@ -133,18 +123,15 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.RecipeView
             });
         }
 
-        // Helper method to get ingredients list from Recipe - FIXED
         private List<String> getRecipeIngredientsList(Recipe recipe) {
             List<String> ingredientsList = new ArrayList<>();
 
             try {
-                // Try to get from ingredients list
                 List<String> recipeIngredients = recipe.getIngredientsList();
                 if (recipeIngredients != null && !recipeIngredients.isEmpty()) {
                     ingredientsList.addAll(recipeIngredients);
                 }
 
-                // If empty, try from ingredients map
                 if (ingredientsList.isEmpty()) {
                     Map<String, String> ingredientsMap = recipe.getIngredientsMap();
                     if (ingredientsMap != null && !ingredientsMap.isEmpty()) {
@@ -152,7 +139,6 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.RecipeView
                     }
                 }
 
-                // If still empty, try ingredient details
                 if (ingredientsList.isEmpty()) {
                     Map<String, Recipe.IngredientDetail> detailsMap = recipe.getIngredientDetailsMap();
                     if (detailsMap != null && !detailsMap.isEmpty()) {

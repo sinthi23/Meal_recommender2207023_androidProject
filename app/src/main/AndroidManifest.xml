@@ -2,18 +2,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Network Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
-    <!-- Storage Permissions (for older Android versions) -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="32"
         tools:ignore="ScopedStorage" />
 
-    <!-- Media Permissions (for Android 13+) -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
 
     <application
@@ -28,7 +25,6 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
 
-        <!-- Splash Activity (Launcher) -->
         <activity
             android:name=".activities.SplashActivity"
             android:exported="true"
@@ -39,12 +35,10 @@
             </intent-filter>
         </activity>
 
-        <!-- Main Activity -->
         <activity
             android:name=".activities.MainActivity"
             android:exported="false" />
 
-        <!-- Authentication Activities -->
         <activity
             android:name=".activities.LoginActivity"
             android:exported="false"
@@ -60,7 +54,6 @@
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
 
-        <!-- Consumer Activities -->
         <activity
             android:name=".activities.consumer.AnalyticsActivity"
             android:exported="false" />
@@ -81,7 +74,6 @@
             android:name=".activities.consumer.ProfileActivity"
             android:exported="false" />
 
-        <!-- Provider Activities -->
         <activity
             android:name=".activities.provider.ProviderDashboardActivity"
             android:exported="false" />
@@ -100,7 +92,6 @@
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
 
-        <!-- FileProvider for image picking -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

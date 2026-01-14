@@ -40,23 +40,19 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        // Initialize Firebase first
         mAuth = FirebaseAuth.getInstance();
         usersRef = FirebaseDatabase.getInstance()
                 .getInstance("https://meal-recommender-android-9801b-default-rtdb.firebaseio.com")
                 .getReference("users");
         sessionManager = new SessionManager(this);
 
-        // Check if user is already logged in
         if (sessionManager.isLoggedIn()) {
             redirectToAppropriateActivity();
             return;
         }
 
-        // Initialize views
         initViews();
 
-        // Setup listeners
         setupListeners();
     }
 
@@ -85,7 +81,6 @@ public class LoginActivity extends AppCompatActivity {
         String emailOrUsername = etEmailOrUsername.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
 
-        // Validation
         if (TextUtils.isEmpty(emailOrUsername)) {
             etEmailOrUsername.setError("Email or username is required");
             etEmailOrUsername.requestFocus();
@@ -98,16 +93,12 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
-        // Show progress
         progressBar.setVisibility(View.VISIBLE);
         btnLogin.setEnabled(false);
 
-        // Check if input is email or username
         if (emailOrUsername.contains("@")) {
-            // It's an email, login directly
             loginWithEmail(emailOrUsername, password);
         } else {
-            // It's a username, find the email first
             findEmailByUsername(emailOrUsername, password);
         }
     }
@@ -119,11 +110,9 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (snapshot.exists()) {
-                    // Get the first matching user
                     for (DataSnapshot userSnapshot : snapshot.getChildren()) {
                         String email = userSnapshot.child("email").getValue(String.class);
                         if (email != null) {
-                            // Found the email, now login
                             loginWithEmail(email, password);
                             return;
                         }
@@ -154,13 +143,11 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void loginWithEmail(String email, String password) {
-        // Authenticate with Firebase
         mAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         FirebaseUser user = mAuth.getCurrentUser();
                         if (user != null) {
-                            // Get user data from database
                             usersRef.child(user.getUid())
                                     .addListenerForSingleValueEvent(new ValueEventListener() {
                                         @Override
@@ -169,13 +156,11 @@ public class LoginActivity extends AppCompatActivity {
                                             btnLogin.setEnabled(true);
 
                                             if (snapshot.exists()) {
-                                                // Get user data
                                                 String username = snapshot.child("username").getValue(String.class);
                                                 String fullName = snapshot.child("fullName").getValue(String.class);
                                                 String userType = snapshot.child("userType").getValue(String.class);
                                                 String accountType = snapshot.child("accountType").getValue(String.class);
 
-                                                // Determine display name
                                                 String displayName = username;
                                                 if (displayName == null || displayName.isEmpty()) {
                                                     displayName = fullName;
@@ -184,7 +169,6 @@ public class LoginActivity extends AppCompatActivity {
                                                     displayName = email.split("@")[0];
                                                 }
 
-                                                // Determine account type
                                                 String finalAccountType = accountType;
                                                 if (finalAccountType == null || finalAccountType.isEmpty()) {
                                                     finalAccountType = userType;
@@ -193,14 +177,12 @@ public class LoginActivity extends AppCompatActivity {
                                                     finalAccountType = "consumer";
                                                 }
 
-                                                // Migrate username if doesn't exist
                                                 if (username == null || username.isEmpty()) {
                                                     usersRef.child(user.getUid())
                                                             .child("username")
                                                             .setValue(displayName);
                                                 }
 
-                                                // Save session with username
                                                 sessionManager.createLoginSession(
                                                         user.getUid(),
                                                         finalAccountType,
@@ -212,7 +194,6 @@ public class LoginActivity extends AppCompatActivity {
                                                         "Welcome back, " + displayName + "!",
                                                         Toast.LENGTH_SHORT).show();
 
-                                                // Route based on user type
                                                 redirectToAppropriateActivity();
                                             } else {
                                                 Toast.makeText(LoginActivity.this,
@@ -238,7 +219,6 @@ public class LoginActivity extends AppCompatActivity {
                         String errorMessage = task.getException() != null ?
                                 task.getException().getMessage() : "Login failed";
 
-                        // User-friendly error messages
                         if (errorMessage.contains("no user record") || errorMessage.contains("user-not-found")) {
                             errorMessage = "Account not found. Please check your credentials.";
                         } else if (errorMessage.contains("password is invalid") || errorMessage.contains("wrong-password")) {

@@ -53,7 +53,6 @@ public class ForgotPasswordActivity extends AppCompatActivity {
             email = binding.emailEditText.getText().toString().trim();
         }
 
-        // Validation
         if (TextUtils.isEmpty(email)) {
             binding.emailEditText.setError("Email is required");
             binding.emailEditText.requestFocus();
@@ -82,7 +81,6 @@ public class ForgotPasswordActivity extends AppCompatActivity {
                             if (task.getException() != null) {
                                 errorMessage = task.getException().getMessage();
 
-                                // User-friendly error messages
                                 if (errorMessage.contains("no user record") || errorMessage.contains("user-not-found")) {
                                     errorMessage = "No account found with this email address. Please check your email or register a new account.";
                                 } else if (errorMessage.contains("invalid-email")) {

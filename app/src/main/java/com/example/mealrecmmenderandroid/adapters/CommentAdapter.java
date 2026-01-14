@@ -84,12 +84,10 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
                     comment.getUserName() : comment.getUserEmail());
             commentTextView.setText(comment.getCommentText());
 
-            // Format timestamp
             SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy 'at' hh:mm a", Locale.getDefault());
             String dateString = sdf.format(new Date(comment.getTimestamp()));
             timestampTextView.setText(dateString);
 
-            // Show rating only for top-level comments
             if (!comment.isReply() && comment.getRating() > 0) {
                 ratingContainer.setVisibility(View.VISIBLE);
                 ratingBar.setRating((float) comment.getRating());
@@ -97,14 +95,12 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
                 ratingContainer.setVisibility(View.GONE);
             }
 
-            // Reply button
             replyButton.setOnClickListener(v -> {
                 if (listener != null) {
                     listener.onReplyClick(comment);
                 }
             });
 
-            // View replies button
             if (comment.getReplyCount() > 0) {
                 viewRepliesButton.setVisibility(View.VISIBLE);
                 viewRepliesButton.setText("View " + comment.getReplyCount() +

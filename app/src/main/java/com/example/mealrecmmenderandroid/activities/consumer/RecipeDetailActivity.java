@@ -45,7 +45,7 @@ public class RecipeDetailActivity extends AppCompatActivity {
     private Recipe currentRecipe;
     private String recipeId;
 
-    // Comments
+
     private CommentAdapter commentAdapter;
     private List<Comment> commentsList;
 
@@ -76,7 +76,7 @@ public class RecipeDetailActivity extends AppCompatActivity {
         loadRecipe();
         loadComments();
         incrementViewCount();
-        setupRealtimeCountsListener(); // Add real-time listener for counts
+        setupRealtimeCountsListener();
     }
 
     private void setupToolbar() {
@@ -113,7 +113,6 @@ public class RecipeDetailActivity extends AppCompatActivity {
         binding.submitCommentButton.setOnClickListener(v -> submitComment());
     }
 
-    // NEW METHOD: Real-time listener for view and cook counts
     private void setupRealtimeCountsListener() {
         firebaseHelper.getRecipeRef(recipeId)
                 .addValueEventListener(new ValueEventListener() {
@@ -151,15 +150,12 @@ public class RecipeDetailActivity extends AppCompatActivity {
                                 commentsList.add(comment);
                             }
                         }
-                        // Reverse to show newest first
                         Collections.reverse(commentsList);
                         commentAdapter.updateComments(commentsList);
 
-                        // Update comments count
                         binding.commentsCountTextView.setText(commentsList.size() + " Comment" +
                                 (commentsList.size() != 1 ? "s" : ""));
 
-                        // Show/hide empty state
                         if (commentsList.isEmpty()) {
                             binding.commentsRecyclerView.setVisibility(View.GONE);
                             binding.noCommentsTextView.setVisibility(View.VISIBLE);
@@ -222,7 +218,6 @@ public class RecipeDetailActivity extends AppCompatActivity {
                     binding.commentEditText.setText("");
                     binding.commentRatingBar.setRating(0);
 
-                    // Update recipe rating
                     updateRecipeRating(rating);
                 })
                 .addOnFailureListener(e -> {
@@ -280,7 +275,7 @@ public class RecipeDetailActivity extends AppCompatActivity {
                 userName != null ? userName : userEmail,
                 userEmail,
                 replyText,
-                parentComment.getCommentId(),  // Set parent comment ID
+                parentComment.getCommentId(),
                 System.currentTimeMillis()
         );
 
@@ -290,7 +285,6 @@ public class RecipeDetailActivity extends AppCompatActivity {
                 .addOnSuccessListener(aVoid -> {
                     Toast.makeText(this, "Reply posted!", Toast.LENGTH_SHORT).show();
 
-                    // Increment reply count
                     incrementReplyCount(parentComment.getCommentId());
                 })
                 .addOnFailureListener(e -> {
@@ -346,21 +340,17 @@ public class RecipeDetailActivity extends AppCompatActivity {
                 new CommentAdapter.OnCommentInteractionListener() {
                     @Override
                     public void onReplyClick(Comment comment) {
-                        // Can reply to the parent comment from here too
                         dialog.dismiss();
                         showReplyDialog(parentComment);
                     }
 
                     @Override
                     public void onViewRepliesClick(Comment comment) {
-                        // Not needed for replies
                     }
                 });
 
         repliesRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         repliesRecyclerView.setAdapter(repliesAdapter);
-
-        // Load replies
         firebaseHelper.getRecipeCommentsRef(recipeId)
                 .orderByChild("parentCommentId")
                 .equalTo(parentComment.getCommentId())
@@ -433,12 +423,10 @@ public class RecipeDetailActivity extends AppCompatActivity {
     }
 
     private void displayRecipe(Recipe recipe) {
-        // Basic Info
         binding.recipeNameTextView.setText(recipe.getRecipeName() != null ? recipe.getRecipeName() : "Unknown Recipe");
         binding.descriptionTextView.setText(recipe.getDescription() != null ? recipe.getDescription() : "No description");
         binding.providerNameTextView.setText("By " + (recipe.getProviderName() != null ? recipe.getProviderName() : "Unknown"));
 
-        // Stats
         binding.caloriesTextView.setText(recipe.getCalories() + " cal");
         binding.prepTimeTextView.setText(recipe.getPreparationTime() + " min");
         binding.cookTimeTextView.setText(recipe.getCookingTime() + " min");
@@ -448,35 +436,27 @@ public class RecipeDetailActivity extends AppCompatActivity {
         binding.categoryTextView.setText(recipe.getCategory() != null ? recipe.getCategory() : "");
         binding.cuisineTextView.setText(recipe.getCuisine() != null ? recipe.getCuisine() : "");
 
-        // Rating
         binding.ratingBar.setRating((float) recipe.getAverageRating());
         binding.ratingCountTextView.setText("(" + recipe.getTotalRatings() + " ratings)");
 
-        // View count and cook count - Now handled by setupRealtimeCountsListener()
-        // Initial placeholder text
         binding.viewCountTextView.setText("0 views");
         binding.cookCountTextView.setText("0 times cooked");
 
-        // Nutrition
         binding.proteinTextView.setText(String.format("%.1fg", recipe.getProtein()));
         binding.carbsTextView.setText(String.format("%.1fg", recipe.getCarbs()));
         binding.fatTextView.setText(String.format("%.1fg", recipe.getFat()));
         binding.fiberTextView.setText(String.format("%.1fg", recipe.getFiber()));
 
-        // Image
         if (recipe.getImageUrl() != null && !recipe.getImageUrl().isEmpty()) {
             ImageHelper.loadImage(this, recipe.getImageUrl(), binding.recipeImageView);
         } else {
             binding.recipeImageView.setImageResource(R.drawable.ic_image_placeholder);
         }
 
-        // Ingredients
         displayIngredients(recipe);
 
-        // Instructions
         binding.instructionsTextView.setText(recipe.getInstructions() != null ? recipe.getInstructions() : "No instructions provided");
 
-        // Tags
         displayTags(null);
     }
 
@@ -694,7 +674,6 @@ public class RecipeDetailActivity extends AppCompatActivity {
                         if (error != null) {
                             android.util.Log.e("RecipeDetail", "Cook count update failed: " + error.getMessage());
                         }
-                        // UI will be updated by the real-time listener
                     }
                 });
     }
@@ -721,7 +700,6 @@ public class RecipeDetailActivity extends AppCompatActivity {
                         if (error != null) {
                             android.util.Log.e("RecipeDetail", "View count update failed: " + error.getMessage());
                         }
-                        // UI will be updated by the real-time listener
                     }
                 });
     }

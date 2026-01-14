@@ -61,7 +61,6 @@ public class CookHistoryActivity extends AppCompatActivity {
                 new CookHistoryAdapter.OnHistoryClickListener() {
                     @Override
                     public void onHistoryClick(CookHistory cookHistory) {
-                        // Show details when history item is clicked
                         Toast.makeText(CookHistoryActivity.this,
                                 "Cooked: " + cookHistory.getRecipeName(),
                                 Toast.LENGTH_SHORT).show();
@@ -69,7 +68,6 @@ public class CookHistoryActivity extends AppCompatActivity {
 
                     @Override
                     public void onViewRecipeClick(CookHistory cookHistory) {
-                        // View recipe details when button is clicked
                         Intent intent = new Intent(CookHistoryActivity.this,
                                 RecipeDetailActivity.class);
                         intent.putExtra("recipe_id", cookHistory.getRecipeId());
@@ -100,7 +98,6 @@ public class CookHistoryActivity extends AppCompatActivity {
                     }
                 }
 
-                // Sort by most recent first
                 Collections.reverse(historyList);
 
                 if (historyList.isEmpty()) {
@@ -110,7 +107,6 @@ public class CookHistoryActivity extends AppCompatActivity {
                     binding.emptyStateLayout.setVisibility(View.GONE);
                     binding.historyRecyclerView.setVisibility(View.VISIBLE);
 
-                    // Update statistics
                     updateStatistics();
                 }
 

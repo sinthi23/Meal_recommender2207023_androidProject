@@ -54,16 +54,13 @@ public class IngredientSelectionActivity extends AppCompatActivity {
     }
 
     private void setupListeners() {
-        // Clear button acts as ADD button
         binding.clearButton.setOnClickListener(v -> addIngredient());
 
-        // Enter key on keyboard adds ingredient
         binding.searchEditText.setOnEditorActionListener((v, actionId, event) -> {
             addIngredient();
             return true;
         });
 
-        // Done button
         binding.doneButton.setOnClickListener(v -> searchRecipes());
     }
 
@@ -75,7 +72,6 @@ public class IngredientSelectionActivity extends AppCompatActivity {
             return;
         }
 
-        // Check if already added
         String lowerIngredient = ingredient.toLowerCase();
         if (selectedIngredients.contains(lowerIngredient)) {
             Toast.makeText(this, "Already added!", Toast.LENGTH_SHORT).show();
@@ -83,11 +79,9 @@ public class IngredientSelectionActivity extends AppCompatActivity {
             return;
         }
 
-        // Add ingredient
         selectedIngredients.add(lowerIngredient);
         addIngredientChip(ingredient);
 
-        // Clear input
         binding.searchEditText.setText("");
         binding.searchEditText.requestFocus();
 
@@ -106,7 +100,6 @@ public class IngredientSelectionActivity extends AppCompatActivity {
             updateSelectedCount();
         });
 
-        // Use RecyclerView as a container for chips
         binding.ingredientsRecyclerView.addView(chip);
     }
 

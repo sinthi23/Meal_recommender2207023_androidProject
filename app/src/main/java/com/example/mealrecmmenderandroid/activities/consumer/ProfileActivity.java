@@ -46,11 +46,9 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     private void loadUserProfile() {
-        // Show loading
         binding.progressBar.setVisibility(View.VISIBLE);
         binding.profileCard.setVisibility(View.GONE);
 
-        // First, load from session (fast)
         String sessionUsername = sessionManager.getUserName();
         String sessionEmail = sessionManager.getUserEmail();
         String sessionAccountType = sessionManager.getAccountType();
@@ -65,7 +63,6 @@ public class ProfileActivity extends AppCompatActivity {
             binding.tvUserType.setText(capitalize(sessionAccountType));
         }
 
-        // Then, load from Firebase (accurate)
         String userId = sessionManager.getUserId();
         if (userId != null) {
             firebaseHelper.getUserRef(userId)
@@ -76,7 +73,6 @@ public class ProfileActivity extends AppCompatActivity {
                             binding.profileCard.setVisibility(View.VISIBLE);
 
                             if (snapshot.exists()) {
-                                // Get all possible name fields
                                 String username = snapshot.child("username").getValue(String.class);
                                 String fullName = snapshot.child("fullName").getValue(String.class);
                                 String email = snapshot.child("email").getValue(String.class);
@@ -84,7 +80,6 @@ public class ProfileActivity extends AppCompatActivity {
                                 String accountType = snapshot.child("accountType").getValue(String.class);
                                 String phone = snapshot.child("phone").getValue(String.class);
 
-                                // Priority: username → fullName → email prefix
                                 String displayName = username;
                                 if (displayName == null || displayName.isEmpty()) {
                                     displayName = fullName;
@@ -93,26 +88,21 @@ public class ProfileActivity extends AppCompatActivity {
                                     displayName = email.split("@")[0];
                                 }
 
-                                // Display username
                                 if (displayName != null && !displayName.isEmpty()) {
                                     binding.tvUserName.setText(displayName);
 
-                                    // Update session with username if it was missing
                                     if (username == null || username.isEmpty()) {
                                         sessionManager.updateUsername(displayName);
-                                        // Also update Firebase
                                         firebaseHelper.getUserRef(userId)
                                                 .child("username")
                                                 .setValue(displayName);
                                     }
                                 }
 
-                                // Display email
                                 if (email != null && !email.isEmpty()) {
                                     binding.tvUserEmail.setText(email);
                                 }
 
-                                // Display account type
                                 String finalAccountType = accountType;
                                 if (finalAccountType == null || finalAccountType.isEmpty()) {
                                     finalAccountType = userType;
@@ -121,7 +111,6 @@ public class ProfileActivity extends AppCompatActivity {
                                     binding.tvUserType.setText(capitalize(finalAccountType));
                                 }
 
-                                // Display phone (if available)
                                 if (phone != null && !phone.isEmpty() && binding.tvUserPhone != null) {
                                     binding.tvUserPhone.setText(phone);
                                     if (binding.phoneContainer != null) {
@@ -129,7 +118,6 @@ public class ProfileActivity extends AppCompatActivity {
                                     }
                                 }
 
-                                // Display user stats (if they exist)
                                 loadUserStats(snapshot);
                             }
                         }
@@ -150,7 +138,6 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     private void loadUserStats(DataSnapshot snapshot) {
-        // For providers: show recipe stats
         if (sessionManager.isProvider() && binding.statsContainer != null) {
             Integer totalRecipes = snapshot.child("totalRecipesProvided").getValue(Integer.class);
             Double averageRating = snapshot.child("averageRating").getValue(Double.class);
@@ -180,13 +167,10 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     private void logout() {
-        // Sign out from Firebase
         firebaseHelper.getAuth().signOut();
 
-        // Clear session
         sessionManager.logoutUser();
 
-        // Navigate to login
         Intent intent = new Intent(ProfileActivity.this, LoginActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);

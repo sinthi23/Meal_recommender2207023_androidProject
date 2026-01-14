@@ -63,7 +63,6 @@ public class AddRecipeActivity extends AppCompatActivity {
     }
 
     private void setupSpinners() {
-        // Category spinner - UPDATED WITH NEW CATEGORIES
         String[] categories = {
                 "Spicy",
                 "Dessert",
@@ -81,13 +80,11 @@ public class AddRecipeActivity extends AppCompatActivity {
                 this, android.R.layout.simple_spinner_dropdown_item, categories);
         binding.categorySpinner.setAdapter(categoryAdapter);
 
-        // Difficulty spinner
         String[] difficulties = {"Easy", "Medium", "Hard"};
         ArrayAdapter<String> difficultyAdapter = new ArrayAdapter<>(
                 this, android.R.layout.simple_spinner_dropdown_item, difficulties);
         binding.difficultySpinner.setAdapter(difficultyAdapter);
 
-        // Cuisine spinner - EXPANDED OPTIONS
         String[] cuisines = {
                 "American",
                 "Italian",
@@ -149,7 +146,6 @@ public class AddRecipeActivity extends AppCompatActivity {
             return;
         }
 
-        // Add to list
         ingredientsList.add(name);
 
         if (!TextUtils.isEmpty(quantity) && !TextUtils.isEmpty(unit)) {
@@ -157,7 +153,6 @@ public class AddRecipeActivity extends AppCompatActivity {
             ingredientDetailsList.add(detail);
         }
 
-        // Display as chip
         Chip chip = new Chip(this);
         String displayText = name;
         if (!TextUtils.isEmpty(quantity) && !TextUtils.isEmpty(unit)) {
@@ -179,14 +174,12 @@ public class AddRecipeActivity extends AppCompatActivity {
         });
         binding.ingredientsChipGroup.addView(chip);
 
-        // Clear inputs
         binding.ingredientNameEditText.setText("");
         binding.ingredientQuantityEditText.setText("");
         binding.ingredientUnitEditText.setText("");
     }
 
     private void submitRecipe() {
-        // Validate inputs
         String recipeName = binding.recipeNameEditText.getText().toString().trim();
         String description = binding.descriptionEditText.getText().toString().trim();
         String instructions = binding.instructionsEditText.getText().toString().trim();
@@ -196,7 +189,6 @@ public class AddRecipeActivity extends AppCompatActivity {
         String servingsStr = binding.servingsEditText.getText().toString().trim();
         String healthScoreStr = binding.healthScoreEditText.getText().toString().trim();
 
-        // Nutrition
         String proteinStr = binding.proteinEditText.getText().toString().trim();
         String carbsStr = binding.carbsEditText.getText().toString().trim();
         String fatStr = binding.fatEditText.getText().toString().trim();
@@ -225,11 +217,9 @@ public class AddRecipeActivity extends AppCompatActivity {
             return;
         }
 
-        // Show progress
         binding.progressBar.setVisibility(View.VISIBLE);
         binding.submitRecipeButton.setEnabled(false);
 
-        // Create recipe directly without image upload
         createRecipe(
                 recipeName, description, instructions,
                 parseIntSafe(caloriesStr, 0),
@@ -274,10 +264,8 @@ public class AddRecipeActivity extends AppCompatActivity {
         recipe.setFat(fat);
         recipe.setFiber(fiber);
 
-        // Use placeholder image URL - NO FIREBASE STORAGE
         String imageUrl;
         if (selectedImageUri != null) {
-            // Use placeholder with recipe name
             imageUrl = "https://via.placeholder.com/600x400/4CAF50/FFFFFF?text=" +
                     recipeName.replace(" ", "+");
         } else {
@@ -285,29 +273,24 @@ public class AddRecipeActivity extends AppCompatActivity {
         }
         recipe.setImageUrl(imageUrl);
 
-        // Don't convert category to lowercase - keep original case
         recipe.setCategory(binding.categorySpinner.getSelectedItem().toString());
         recipe.setDifficulty(binding.difficultySpinner.getSelectedItem().toString().toLowerCase());
         recipe.setCuisine(binding.cuisineSpinner.getSelectedItem().toString());
 
-        // Convert lists to maps for Firebase
         recipe.setIngredientsFromList(ingredientsList);
 
-        // Convert ingredient details to map
+
         Map<String, Recipe.IngredientDetail> detailsMap = new HashMap<>();
         for (int i = 0; i < ingredientDetailsList.size(); i++) {
             detailsMap.put(String.valueOf(i), ingredientDetailsList.get(i));
         }
         recipe.setIngredientDetails(detailsMap);
 
-        // Admin approval required
-        recipe.setApproved(true); // Auto-approve for now since no admin system yet
+        recipe.setApproved(true);
         recipe.setCreatedAt(System.currentTimeMillis());
 
-        // Save to database
         firebaseHelper.getRecipeRef(recipeId).setValue(recipe)
                 .addOnSuccessListener(aVoid -> {
-                    // Update provider recipe count
                     updateProviderRecipeCount();
 
                     binding.progressBar.setVisibility(View.GONE);
@@ -348,7 +331,6 @@ public class AddRecipeActivity extends AppCompatActivity {
                     public void onComplete(com.google.firebase.database.DatabaseError error,
                                            boolean committed,
                                            com.google.firebase.database.DataSnapshot snapshot) {
-                        // Transaction completed
                     }
                 });
     }

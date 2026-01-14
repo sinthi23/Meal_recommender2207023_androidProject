@@ -54,7 +54,6 @@ public class ProviderDashboardActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setTitle("Provider Dashboard");
 
-            // Show username in subtitle instead of email
             String username = sessionManager.getUserName();
             if (username != null && !username.isEmpty()) {
                 getSupportActionBar().setSubtitle(username);
@@ -86,7 +85,6 @@ public class ProviderDashboardActivity extends AppCompatActivity {
 
                     @Override
                     public void onViewClick(Recipe recipe) {
-                        // View recipe details
                         Intent intent = new Intent(ProviderDashboardActivity.this,
                                 com.example.mealrecmmenderandroid.activities.consumer.RecipeDetailActivity.class);
                         intent.putExtra("recipeId", recipe.getRecipeId());
@@ -169,7 +167,6 @@ public class ProviderDashboardActivity extends AppCompatActivity {
         String providerId = sessionManager.getUserId();
         String userEmail = sessionManager.getUserEmail();
 
-        // Show debug info
         android.util.Log.d("ProviderDashboard", "===== LOADING RECIPES =====");
         android.util.Log.d("ProviderDashboard", "Searching for providerId: " + providerId);
         android.util.Log.d("ProviderDashboard", "User Email: " + userEmail);
@@ -227,7 +224,6 @@ public class ProviderDashboardActivity extends AppCompatActivity {
 
                         android.util.Log.i("ProviderDashboard", "No recipes found for this user");
 
-                        // Show helpful message
                         Toast.makeText(ProviderDashboardActivity.this,
                                 "No recipes yet. Click 'Add Recipe' to create your first recipe!",
                                 Toast.LENGTH_LONG).show();
@@ -338,7 +334,6 @@ public class ProviderDashboardActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        // Reload data when returning to dashboard
         android.util.Log.d("ProviderDashboard", "onResume() - Reloading data");
         loadProviderStats();
         loadMyRecipes();

@@ -17,15 +17,12 @@ public class FirebaseHelper {
     private FirebaseHelper() {
         auth = FirebaseAuth.getInstance();
 
-        // IMPORTANT: Use explicit database URL
         database = FirebaseDatabase.getInstance("https://meal-recommender-android-9801b-default-rtdb.firebaseio.com");
 
         storage = FirebaseStorage.getInstance();
 
-        // Log for debugging
         Log.d("FirebaseHelper", "Database URL: " + database.getReference().toString());
 
-        // Enable offline persistence
         try {
             database.setPersistenceEnabled(true);
         } catch (Exception e) {
@@ -52,7 +49,6 @@ public class FirebaseHelper {
         return storage;
     }
 
-    // Database References
     public DatabaseReference getUsersRef() {
         return database.getReference("users");
     }
@@ -89,7 +85,6 @@ public class FirebaseHelper {
         return database.getReference("ingredients");
     }
 
-    // Comments References - NEW
     public DatabaseReference getRecipeCommentsRef(String recipeId) {
         return database.getReference("recipe_comments").child(recipeId);
     }
@@ -98,7 +93,6 @@ public class FirebaseHelper {
         return database.getReference("recipe_comments");
     }
 
-    // Storage References
     public StorageReference getRecipeImagesRef() {
         return storage.getReference("recipe_images");
     }
@@ -107,7 +101,6 @@ public class FirebaseHelper {
         return storage.getReference("profile_images");
     }
 
-    // User helpers
     public String getCurrentUserId() {
         return auth.getCurrentUser() != null ? auth.getCurrentUser().getUid() : null;
     }

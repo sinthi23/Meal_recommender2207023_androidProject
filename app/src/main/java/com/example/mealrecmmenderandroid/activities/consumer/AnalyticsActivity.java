@@ -100,14 +100,12 @@ public class AnalyticsActivity extends AppCompatActivity {
     }
 
     private void updateStatistics() {
-        // Calculate this week's meals (last 7 days)
         int thisWeekCount = 0;
         int thisMonthCount = 0;
 
         Calendar calendar = Calendar.getInstance();
         long currentTime = System.currentTimeMillis();
 
-        // Start of last 7 days (7 days ago at midnight)
         calendar.setTimeInMillis(currentTime);
         calendar.add(Calendar.DAY_OF_YEAR, -6);
         calendar.set(Calendar.HOUR_OF_DAY, 0);
@@ -115,7 +113,6 @@ public class AnalyticsActivity extends AppCompatActivity {
         calendar.set(Calendar.SECOND, 0);
         long weekStart = calendar.getTimeInMillis();
 
-        // Start of this month
         calendar.setTimeInMillis(currentTime);
         calendar.set(Calendar.DAY_OF_MONTH, 1);
         calendar.set(Calendar.HOUR_OF_DAY, 0);
@@ -138,7 +135,6 @@ public class AnalyticsActivity extends AppCompatActivity {
     }
 
     private void setupMostCookedMealsChart() {
-        // Count how many times each meal was cooked
         Map<String, Integer> mealCounts = new HashMap<>();
 
         for (CookHistory history : cookHistoryList) {
@@ -148,7 +144,6 @@ public class AnalyticsActivity extends AppCompatActivity {
             }
         }
 
-        // Get top 5 most cooked meals
         List<Map.Entry<String, Integer>> sortedMeals = new ArrayList<>(mealCounts.entrySet());
         sortedMeals.sort((a, b) -> b.getValue().compareTo(a.getValue()));
 
@@ -161,7 +156,6 @@ public class AnalyticsActivity extends AppCompatActivity {
         binding.mostCookedChart.setVisibility(View.VISIBLE);
         binding.noMostCookedDataTextView.setVisibility(View.GONE);
 
-        // Prepare data for chart
         ArrayList<BarEntry> entries = new ArrayList<>();
         ArrayList<String> labels = new ArrayList<>();
 
@@ -170,7 +164,6 @@ public class AnalyticsActivity extends AppCompatActivity {
             Map.Entry<String, Integer> entry = sortedMeals.get(i);
             entries.add(new BarEntry(i, entry.getValue()));
 
-            // Truncate long recipe names
             String name = entry.getKey();
             if (name.length() > 15) {
                 name = name.substring(0, 12) + "...";
@@ -178,7 +171,6 @@ public class AnalyticsActivity extends AppCompatActivity {
             labels.add(name);
         }
 
-        // Create dataset
         BarDataSet dataSet = new BarDataSet(entries, "Times Cooked");
         dataSet.setColors(new int[]{
                 Color.parseColor("#4CAF50"),
@@ -193,7 +185,6 @@ public class AnalyticsActivity extends AppCompatActivity {
         BarData barData = new BarData(dataSet);
         barData.setBarWidth(0.8f);
 
-        // Configure chart
         binding.mostCookedChart.setData(barData);
         binding.mostCookedChart.setFitBars(true);
         binding.mostCookedChart.animateY(1000, Easing.EaseInOutQuad);
@@ -202,7 +193,6 @@ public class AnalyticsActivity extends AppCompatActivity {
         description.setText("");
         binding.mostCookedChart.setDescription(description);
 
-        // X-axis
         XAxis xAxis = binding.mostCookedChart.getXAxis();
         xAxis.setValueFormatter(new IndexAxisValueFormatter(labels));
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
@@ -210,7 +200,6 @@ public class AnalyticsActivity extends AppCompatActivity {
         xAxis.setGranularityEnabled(true);
         xAxis.setDrawGridLines(false);
 
-        // Y-axis
         YAxis leftAxis = binding.mostCookedChart.getAxisLeft();
         leftAxis.setAxisMinimum(0f);
         leftAxis.setGranularity(1f);
@@ -222,11 +211,9 @@ public class AnalyticsActivity extends AppCompatActivity {
     }
 
     private void setupCaloriesTrendChart() {
-        // Get last 7 days of calorie data
         Calendar calendar = Calendar.getInstance();
         long currentTime = System.currentTimeMillis();
 
-        // Start of 7 days ago
         calendar.setTimeInMillis(currentTime);
         calendar.add(Calendar.DAY_OF_YEAR, -6);
         calendar.set(Calendar.HOUR_OF_DAY, 0);
@@ -234,11 +221,9 @@ public class AnalyticsActivity extends AppCompatActivity {
         calendar.set(Calendar.SECOND, 0);
         long sevenDaysAgo = calendar.getTimeInMillis();
 
-        // Group calories by day
         Map<String, Integer> dailyCalories = new HashMap<>();
         SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd", Locale.getDefault());
 
-        // Initialize last 7 days with 0 calories
         for (int i = 0; i < 7; i++) {
             calendar.setTimeInMillis(currentTime);
             calendar.add(Calendar.DAY_OF_YEAR, -6 + i);
@@ -246,7 +231,6 @@ public class AnalyticsActivity extends AppCompatActivity {
             dailyCalories.put(dateKey, 0);
         }
 
-        // Add actual calorie data
         for (CookHistory history : cookHistoryList) {
             long timestamp = history.getTimestamp();
             if (timestamp >= sevenDaysAgo) {
@@ -266,7 +250,6 @@ public class AnalyticsActivity extends AppCompatActivity {
         binding.caloriesTrendChart.setVisibility(View.VISIBLE);
         binding.noCaloriesDataTextView.setVisibility(View.GONE);
 
-        // Prepare data for chart
         ArrayList<Entry> entries = new ArrayList<>();
         ArrayList<String> labels = new ArrayList<>();
 
@@ -282,7 +265,6 @@ public class AnalyticsActivity extends AppCompatActivity {
             index++;
         }
 
-        // Create dataset
         LineDataSet dataSet = new LineDataSet(entries, "Calories");
         dataSet.setColor(Color.parseColor("#FF9800"));
         dataSet.setCircleColor(Color.parseColor("#FF9800"));
@@ -296,7 +278,6 @@ public class AnalyticsActivity extends AppCompatActivity {
 
         LineData lineData = new LineData(dataSet);
 
-        // Configure chart
         binding.caloriesTrendChart.setData(lineData);
         binding.caloriesTrendChart.animateX(1000, Easing.EaseInOutQuad);
 
@@ -304,14 +285,11 @@ public class AnalyticsActivity extends AppCompatActivity {
         description.setText("");
         binding.caloriesTrendChart.setDescription(description);
 
-        // X-axis
         XAxis xAxis = binding.caloriesTrendChart.getXAxis();
         xAxis.setValueFormatter(new IndexAxisValueFormatter(labels));
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setGranularity(1f);
         xAxis.setDrawGridLines(false);
-
-        // Y-axis
         YAxis leftAxis = binding.caloriesTrendChart.getAxisLeft();
         leftAxis.setAxisMinimum(0f);
 
